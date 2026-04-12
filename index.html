@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Musical Power Hour</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── Login Screen ──────────────────────────────────────────── -->
+  <div id="login-screen">
+    <h1>Musical Power Hour</h1>
+    <p>60 songs. 60 seconds each. Can you guess them all?</p>
+    <button class="btn btn-spotify" onclick="loginWithSpotify()">
+      Login with Spotify
+    </button>
+    <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 1rem;">
+      Requires Spotify Premium
+    </p>
+  </div>
+
+  <!-- ── Game Screen ───────────────────────────────────────────── -->
+  <div id="game-screen" class="hidden">
+
+    <!-- Blurred album art background layer -->
+    <div id="album-art-bg" class="hidden"></div>
+
+    <!-- Top bar: song counter + progress -->
+    <div class="top-bar">
+      <span id="song-counter">Ready to play!</span>
+      <div class="progress-bar">
+        <div id="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- Center stage: timer, visuals, song info -->
+    <div id="center-stage" class="center-stage phase-hidden">
+
+      <!-- Game title (ready screen) -->
+      <h1 id="game-title" class="game-title">Musical Power Hour</h1>
+
+      <!-- Timer ring -->
+      <div id="timer-container" class="timer-container hidden">
+        <svg class="timer-ring" viewBox="0 0 120 120">
+          <circle class="timer-ring-bg" cx="60" cy="60" r="54" />
+          <circle class="timer-ring-progress" id="timer-ring-progress" cx="60" cy="60" r="54" />
+        </svg>
+        <div id="timer-text">60s</div>
+      </div>
+
+      <!-- Question mark (hidden phase) -->
+      <div id="question-mark" class="hidden">?</div>
+
+      <!-- Album art (art phase) -->
+      <img id="album-art" class="hidden" alt="Album Art" />
+
+      <!-- Song info (reveal phase) -->
+      <div class="song-info">
+        <div id="song-title" class="hidden"></div>
+        <div id="song-artist" class="hidden"></div>
+        <div id="song-year" class="hidden"></div>
+      </div>
+
+      <!-- Decade label (decades mode) -->
+      <div id="decade-label" class="hidden"></div>
+
+      <!-- Mode selector -->
+      <div id="mode-selector" class="mode-selector">
+        <button class="mode-btn active" data-mode="shuffle" onclick="selectMode('shuffle')">
+          Shuffle
+        </button>
+        <button class="mode-btn" data-mode="decades" onclick="selectMode('decades')">
+          By Decade
+        </button>
+        <button class="mode-btn" data-mode="playlist" onclick="selectMode('playlist')">
+          My Playlist
+        </button>
+      </div>
+
+      <!-- Playlist picker (shown for My Playlist mode) -->
+      <div id="playlist-picker" class="playlist-picker hidden">
+        <input type="text" id="playlist-search"
+          placeholder="Search your playlists..."
+          spellcheck="false" autocomplete="off" />
+        <div id="playlist-list" class="playlist-list">
+          <div class="playlist-loading">Loading your playlists...</div>
+        </div>
+      </div>
+
+      <!-- Loading indicator -->
+      <div id="loading-indicator" class="hidden">
+        <div class="loading-spinner"></div>
+        <div id="loading-text">Loading...</div>
+      </div>
+
+      <!-- Start button -->
+      <button id="start-btn" class="btn btn-gold" onclick="startGame()">
+        Start Game
+      </button>
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <kbd>Space</kbd> to pause/resume
+      <span class="status-sep">|</span>
+      <a href="#" id="logout-link" onclick="doLogout(); return false;">Logout</a>
+    </div>
+  </div>
+
+  <!-- ── Pause Overlay ─────────────────────────────────────────── -->
+  <div id="pause-overlay" class="hidden">
+    <h2>Paused</h2>
+    <p>Press <kbd>Space</kbd> to resume</p>
+  </div>
+
+  <!-- ── Game Over Screen ──────────────────────────────────────── -->
+  <div id="gameover-screen" class="hidden">
+    <h1>Game Over!</h1>
+    <p>That's all 60 songs. How many did you get?</p>
+    <button class="btn btn-gold" onclick="restartGame()">Play Again</button>
+  </div>
+
+  <!-- ── Toast ─────────────────────────────────────────────────── -->
+  <div id="toast" class="hidden"></div>
+
+  <!-- ── Scripts ───────────────────────────────────────────────── -->
+  <script src="auth.js"></script>
+  <script src="tracks.js"></script>
+  <script src="player.js"></script>
+  <script src="app.js"></script>
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
+  <script>
+    // Spotify SDK calls this when ready
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      if (isLoggedIn()) {
+        initPlayer().catch(err => console.error('Player init failed:', err));
+      }
+    };
+
+    // Boot the game
+    document.addEventListener('DOMContentLoaded', initGame);
+  </script>
+</body>
+</html>

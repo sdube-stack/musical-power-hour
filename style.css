@@ -1,0 +1,550 @@
+/* ── CSS Variables ──────────────────────────────────────────────── */
+:root {
+  --bg: #0a0a0f;
+  --surface: #151520;
+  --text: #f0f0f5;
+  --text-dim: #888899;
+  --accent: rgb(29, 185, 84); /* Spotify green default */
+  --accent-r: 29;
+  --accent-g: 185;
+  --accent-b: 84;
+  --gold: #ffd700;
+  --radius: 12px;
+}
+
+/* ── Reset & Base ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+/* ── Login Screen ──────────────────────────────────────────────── */
+#login-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 2rem;
+}
+
+#login-screen h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--gold), #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#login-screen p {
+  color: var(--text-dim);
+  font-size: 1.1rem;
+}
+
+.btn {
+  padding: 0.9rem 2.5rem;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn:hover { transform: scale(1.03); }
+.btn:active { transform: scale(0.98); }
+
+.btn-spotify {
+  background: #1db954;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(29, 185, 84, 0.3);
+}
+
+.btn-spotify:hover { box-shadow: 0 6px 30px rgba(29, 185, 84, 0.5); }
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), #ff8c00);
+  color: #000;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+  font-size: 1.3rem;
+  padding: 1rem 3rem;
+}
+
+/* ── Game Screen Layout ────────────────────────────────────────── */
+#game-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+}
+
+/* ── Album Art Background (blur layer) ─────────────────────────── */
+#album-art-bg {
+  position: fixed;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(60px) saturate(1.5) brightness(0.3);
+  transform: scale(1.2);
+  z-index: 0;
+  transition: opacity 1.5s ease;
+  opacity: 0;
+}
+
+#album-art-bg:not(.hidden) { opacity: 1; }
+
+/* ── Top Bar ───────────────────────────────────────────────────── */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  z-index: 10;
+  position: relative;
+}
+
+#song-counter {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  margin: 0 1.5rem;
+  overflow: hidden;
+}
+
+#progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* ── Center Stage ──────────────────────────────────────────────── */
+.center-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  z-index: 10;
+  position: relative;
+  padding: 1rem 2rem;
+  min-height: 0;
+}
+
+/* Timer Ring */
+.timer-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.timer-ring {
+  transform: rotate(-90deg);
+  width: 140px;
+  height: 140px;
+}
+
+.timer-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 6;
+}
+
+.timer-ring-progress {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 339.292; /* 2 * PI * 54 */
+  stroke-dashoffset: 0;
+  transition: stroke 0.5s ease;
+}
+
+.phase-revealed .timer-ring-progress {
+  stroke: var(--gold);
+}
+
+#timer-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Game Title (ready screen) ─────────────────────────────────── */
+.game-title {
+  font-size: 2.8rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-align: center;
+  background: linear-gradient(135deg, var(--gold), #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Question Mark ─────────────────────────────────────────────── */
+#question-mark {
+  font-size: 4rem;
+  font-weight: 900;
+  color: var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+/* ── Album Art ─────────────────────────────────────────────────── */
+#album-art {
+  width: 260px;
+  height: 260px;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  animation: artReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes artReveal {
+  from { opacity: 0; transform: scale(0.5) rotate(-5deg); }
+  to { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* ── Song Info ─────────────────────────────────────────────────── */
+.song-info {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+#song-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  animation: revealSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  background: linear-gradient(135deg, var(--gold), #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#song-artist {
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--text);
+  animation: revealSlide 0.6s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#song-year {
+  font-size: 1rem;
+  color: var(--text-dim);
+  animation: revealSlide 0.6s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes revealSlide {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Phase-based accent color on ring ──────────────────────────── */
+.phase-hidden .timer-ring-progress { stroke: rgba(255, 255, 255, 0.25); }
+.phase-art .timer-ring-progress { stroke: var(--accent); }
+.phase-revealed .timer-ring-progress { stroke: var(--gold); }
+
+/* ── Pause Overlay ─────────────────────────────────────────────── */
+#pause-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+#pause-overlay h2 {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+#pause-overlay p {
+  color: var(--text-dim);
+  font-size: 1.1rem;
+}
+
+/* ── Toast ─────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.8rem 1.5rem;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  z-index: 200;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+#toast.show { opacity: 1; }
+
+/* ── Game Over Screen ──────────────────────────────────────────── */
+#gameover-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 2rem;
+}
+
+#gameover-screen h1 {
+  font-size: 3.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--gold), #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#gameover-screen p {
+  color: var(--text-dim);
+  font-size: 1.2rem;
+}
+
+/* ── Mode Selector ─────────────────────────────────────────────── */
+.mode-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.mode-btn {
+  padding: 0.5rem 1.2rem;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--text);
+}
+
+.mode-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(255, 215, 0, 0.08);
+}
+
+/* ── Playlist Picker ───────────────────────────────────────────── */
+.playlist-picker {
+  width: 100%;
+  max-width: 420px;
+}
+
+#playlist-search {
+  width: 100%;
+  padding: 0.5rem 0.9rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#playlist-search:focus {
+  border-color: var(--gold);
+}
+
+#playlist-search::placeholder {
+  color: var(--text-dim);
+}
+
+.playlist-list {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.playlist-list::-webkit-scrollbar { width: 6px; }
+.playlist-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.playlist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0.7rem;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s;
+  border-radius: 8px;
+}
+
+.playlist-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.playlist-item.selected {
+  background: rgba(255, 215, 0, 0.1);
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+.playlist-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.playlist-info {
+  overflow: hidden;
+  min-width: 0;
+}
+
+.playlist-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.playlist-meta {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.playlist-loading {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+/* ── Loading Indicator ────────────────────────────────────────── */
+#loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+#loading-text {
+  color: var(--text-dim);
+  font-size: 1rem;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Decade Label ──────────────────────────────────────────────── */
+#decade-label {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 0.3rem 1rem;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  animation: revealSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Status bar ────────────────────────────────────────────────── */
+.status-bar {
+  padding: 0.8rem 2rem;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  z-index: 10;
+  position: relative;
+}
+
+.status-bar kbd {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.8rem;
+}
+
+.status-sep {
+  margin: 0 0.5rem;
+  opacity: 0.3;
+}
+
+.status-bar a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.status-bar a:hover {
+  color: var(--text);
+}
