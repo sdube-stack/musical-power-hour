@@ -19,20 +19,20 @@
       const error = params.get('error');
 
       if (error) {
-        document.getElementById('status').innerHTML = `<span class="error">Login denied: ${error}</span><br><a href="/" style="color:#1db954">Back to game</a>`;
+        document.getElementById('status').innerHTML = `<span class="error">Login denied: ${error}</span><br><a href="./" style="color:#1db954">Back to game</a>`;
         return;
       }
 
       if (!code) {
-        document.getElementById('status').innerHTML = `<span class="error">No authorization code received</span><br><a href="/" style="color:#1db954">Back to game</a>`;
+        document.getElementById('status').innerHTML = `<span class="error">No authorization code received</span><br><a href="./" style="color:#1db954">Back to game</a>`;
         return;
       }
 
       try {
         await exchangeCodeForToken(code);
-        window.location.href = '/';
+        window.location.href = './';
       } catch (e) {
-        document.getElementById('status').innerHTML = `<span class="error">Login failed: ${e.message}</span><br><a href="/" style="color:#1db954">Try again</a>`;
+        document.getElementById('status').innerHTML = `<span class="error">Login failed: ${e.message}</span><br><a href="./" style="color:#1db954">Try again</a>`;
       }
     })();
   </script>
