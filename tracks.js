@@ -105,33 +105,54 @@ function pickSongsFromBillboard(data, decade, count) {
 
 // ── Build playlists from billboard data ─────────────────────────────
 
-async function buildBillboardShufflePlaylist(onProgress) {
-  const data = await loadBillboard();
-  const allSongs = [];
+async function searchDecadeUntilFull(songs, needed, onProgress, progressOffset) {
+  const BATCH_SIZE = 10;
+  const found = [];
 
-  for (const decade of DECADES) {
-    allSongs.push(...pickSongsFromBillboard(data, decade, 20));
+  for (let i = 0; i < songs.length && found.length < needed; i += BATCH_SIZE) {
+    if (onProgress) onProgress(progressOffset + found.length);
+    const batch = songs.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(
+      batch.map(s => searchSpotifyTrack(s.artist, s.title, s.billboardYear))
+    );
+    for (const r of results) {
+      if (r && found.length < needed) found.push(r);
+    }
   }
 
-  const picked = shuffleTracks(allSongs).slice(0, 60);
-  onProgress?.('Searching Spotify...');
-  return await searchBatch(picked, (i, total) => {
-    onProgress?.(`Searching Spotify... (${i}/${total})`);
-  });
+  return found;
+}
+
+async function buildBillboardShufflePlaylist(onProgress) {
+  const data = await loadBillboard();
+  const result = [];
+
+  for (let i = 0; i < DECADES.length; i++) {
+    const decade = DECADES[i];
+    onProgress?.(`Searching ${decade}s...`);
+    // Pick a large pool, search until we have 10
+    const pool = pickSongsFromBillboard(data, decade, 30);
+    const found = await searchDecadeUntilFull(pool, 10, null, 0);
+    result.push(...found);
+  }
+
+  return shuffleTracks(result);
 }
 
 async function buildBillboardDecadePlaylist(onProgress) {
   const data = await loadBillboard();
-  const allPicked = [];
+  const result = [];
 
-  for (const decade of DECADES) {
-    allPicked.push(...pickSongsFromBillboard(data, decade, 10));
+  for (let i = 0; i < DECADES.length; i++) {
+    const decade = DECADES[i];
+    onProgress?.(`Searching ${decade}s...`);
+    // Pick a large pool, search until we have 10
+    const pool = pickSongsFromBillboard(data, decade, 30);
+    const found = await searchDecadeUntilFull(pool, 10, null, 0);
+    result.push(...found);
   }
 
-  onProgress?.('Searching Spotify...');
-  return await searchBatch(allPicked, (i, total) => {
-    onProgress?.(`Searching Spotify... (${i}/${total})`);
-  });
+  return result;
 }
 
 // ── Fetch playlist tracks (for My Playlist mode) ────────────────────
