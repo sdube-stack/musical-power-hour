@@ -47,7 +47,7 @@ function canReport() {
 
 // ── Search Spotify for a specific song ──────────────────────────────
 
-async function searchSpotifyTrack(artist, title) {
+async function searchSpotifyTrack(artist, title, billboardYear) {
   const token = await getValidToken();
   const q = `track:${title} artist:${artist}`;
   const resp = await fetch(
@@ -63,7 +63,7 @@ async function searchSpotifyTrack(artist, title) {
     uri: t.uri,
     title: t.name,
     artist: (t.artists || []).map(a => a.name).join(', '),
-    year: parseInt(t.album?.release_date?.substring(0, 4), 10) || 0,
+    year: billboardYear || parseInt(t.album?.release_date?.substring(0, 4), 10) || 0,
     originalTitle: title,
     originalArtist: artist,
   };
@@ -79,7 +79,7 @@ async function searchBatch(songs, onProgress) {
     if (onProgress) onProgress(i, songs.length);
     const batch = songs.slice(i, i + BATCH_SIZE);
     const batchResults = await Promise.all(
-      batch.map(s => searchSpotifyTrack(s.artist, s.title))
+      batch.map(s => searchSpotifyTrack(s.artist, s.title, s.billboardYear))
     );
     results.push(...batchResults);
   }
@@ -96,7 +96,7 @@ function pickSongsFromBillboard(data, decade, count) {
 
   for (let y = startYear; y <= endYear; y++) {
     for (const s of (data[y] || [])) {
-      pool.push(s);
+      pool.push({ ...s, billboardYear: y });
     }
   }
 
