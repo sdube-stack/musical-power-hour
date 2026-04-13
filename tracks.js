@@ -1,14 +1,17 @@
 // ── Spotify Playlist-Based Track Source ──────────────────────────────
 
-// Spotify's official "All Out" decade playlists
-const DECADE_PLAYLISTS = {
-  1970: '37i9dQZF1DWTJ7xPn4vNaz', // All Out 70s
-  1980: '37i9dQZF1DX4UtSsGT1Sbe', // All Out 80s
-  1990: '37i9dQZF1DXbTxRx60FQOi', // All Out 90s
-  2000: '37i9dQZF1DX4o1oenSJRJd', // All Out 00s
-  2010: '37i9dQZF1DX5Ejj0EkURtP', // All Out 10s
-  2020: '37i9dQZF1DX2M1RktxUUHG', // All Out 2020s
+// Decade search queries — used to find Spotify's official playlists
+const DECADE_SEARCHES = {
+  1970: 'All Out 70s',
+  1980: 'All Out 80s',
+  1990: 'All Out 90s',
+  2000: 'All Out 00s',
+  2010: 'All Out 10s',
+  2020: 'All Out 2020s',
 };
+
+// Cache resolved playlist IDs so we only search once per session
+const resolvedDecadeIds = {};
 
 // ── Fetch tracks from a Spotify playlist ────────────────────────────
 
@@ -67,16 +70,58 @@ function parseTrackItems(items, tracks) {
   }
 }
 
+// ── Search for a Spotify playlist by name ───────────────────────────
+
+async function searchForPlaylist(query) {
+  if (resolvedDecadeIds[query]) return resolvedDecadeIds[query];
+
+  const token = await getValidToken();
+  const resp = await fetch(
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=playlist&limit=5`,
+    { headers: { 'Authorization': `Bearer ${token}` } }
+  );
+
+  if (!resp.ok) return null;
+  const data = await resp.json();
+
+  // Prefer Spotify's own playlists (owner "Spotify" or id "spotify")
+  const playlists = data.playlists?.items || [];
+  const match = playlists.find(p =>
+    p.owner?.id === 'spotify' && p.name?.toLowerCase().includes('all out')
+  ) || playlists[0];
+
+  if (match) {
+    resolvedDecadeIds[query] = match.id;
+    return match.id;
+  }
+  return null;
+}
+
 // ── Fetch all decade playlists ──────────────────────────────────────
 
 async function fetchAllDecadeTracks(onProgress) {
-  const decades = Object.keys(DECADE_PLAYLISTS).map(Number).sort();
+  const decades = Object.keys(DECADE_SEARCHES).map(Number).sort();
   const decadeMap = {};
 
   for (let i = 0; i < decades.length; i++) {
     const decade = decades[i];
+    const query = DECADE_SEARCHES[decade];
+    if (onProgress) onProgress(`Finding ${decade}s playlist...`, i, decades.length);
+
+    const playlistId = await searchForPlaylist(query);
+    if (!playlistId) {
+      console.warn(`Could not find playlist for ${query}`);
+      decadeMap[decade] = [];
+      continue;
+    }
+
     if (onProgress) onProgress(`Loading ${decade}s...`, i, decades.length);
-    decadeMap[decade] = await fetchPlaylistTracks(DECADE_PLAYLISTS[decade]);
+    try {
+      decadeMap[decade] = await fetchPlaylistTracks(playlistId);
+    } catch (e) {
+      console.warn(`Failed to load ${decade}s:`, e.message);
+      decadeMap[decade] = [];
+    }
   }
 
   return decadeMap;
