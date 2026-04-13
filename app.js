@@ -96,11 +96,12 @@ async function loadUserPlaylists() {
   const $list = document.getElementById('playlist-list');
   $list.innerHTML = '<div class="playlist-loading">Loading your playlists...</div>';
 
-  const playlists = await fetchUserPlaylists();
+  const allPlaylists = await fetchUserPlaylists();
+  const playlists = allPlaylists.filter(p => p.trackCount >= 60);
   userPlaylistsLoaded = true;
 
   if (playlists.length === 0) {
-    $list.innerHTML = '<div class="playlist-loading">No playlists found</div>';
+    $list.innerHTML = '<div class="playlist-loading">No playlists with 60+ songs found</div>';
     return;
   }
 
