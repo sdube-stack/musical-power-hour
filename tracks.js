@@ -65,12 +65,20 @@ async function searchSpotifyTrack(artist, title, billboardYear) {
 
   return {
     uri: t.uri,
-    title: t.name,
+    title: cleanTitle(t.name),
     artist: (t.artists || []).map(a => a.name).join(', '),
     year: billboardYear || parseInt(t.album?.release_date?.substring(0, 4), 10) || 0,
     originalTitle: title,
     originalArtist: artist,
   };
+}
+
+function cleanTitle(title) {
+  return title
+    .replace(/\s*[-–—]\s*(Original Version|Remaster(ed)?(\s+\d{4})?|Single Version|Album Version|Radio Edit|Mono|Stereo|Deluxe|Bonus Track|Re-?recorded|Live|Edit|Mix)\s*/gi, '')
+    .replace(/\s*\((Original Version|Remaster(ed)?(\s+\d{4})?|Single Version|Album Version|Radio Edit|Mono|Stereo|Deluxe|Bonus Track|Re-?recorded|From .+)\)\s*/gi, '')
+    .replace(/\s*\[(Original Version|Remaster(ed)?(\s+\d{4})?|Single Version|Album Version|Radio Edit)\]\s*/gi, '')
+    .trim();
 }
 
 // ── Parallel batch search ───────────────────────────────────────────
