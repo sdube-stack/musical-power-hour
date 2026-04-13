@@ -23,9 +23,9 @@ const REPORT_FIELD_YEAR = 'entry.40724187';
 let reportsThisSession = 0;
 const MAX_REPORTS_PER_SESSION = 5;
 
-function reportSong(artist, title, year) {
-  if (reportsThisSession >= MAX_REPORTS_PER_SESSION) return false;
-  reportsThisSession++;
+function reportSong(artist, title, year, auto = false) {
+  if (!auto && reportsThisSession >= MAX_REPORTS_PER_SESSION) return false;
+  if (!auto) reportsThisSession++;
 
   // Submit to Google Form (fire-and-forget, no-cors)
   if (REPORT_FORM_ID !== 'YOUR_FORM_ID_HERE') {
@@ -57,7 +57,11 @@ async function searchSpotifyTrack(artist, title, billboardYear) {
   if (!resp.ok) return null;
   const data = await resp.json();
   const t = data.tracks?.items?.[0];
-  if (!t) return null;
+  if (!t) {
+    // Auto-report songs not found on Spotify
+    reportSong(artist, title + ' [NOT FOUND ON SPOTIFY]', billboardYear, true);
+    return null;
+  }
 
   return {
     uri: t.uri,
