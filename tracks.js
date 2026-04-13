@@ -1,17 +1,7 @@
 // ── Spotify Playlist-Based Track Source ──────────────────────────────
 
-// Decade search queries — used to find Spotify's official playlists
-const DECADE_SEARCHES = {
-  1970: 'All Out 70s',
-  1980: 'All Out 80s',
-  1990: 'All Out 90s',
-  2000: 'All Out 00s',
-  2010: 'All Out 10s',
-  2020: 'All Out 2020s',
-};
-
-// Cache resolved playlist IDs so we only search once per session
-const resolvedDecadeIds = {};
+// Decades for search-based track loading
+const DECADES = [1970, 1980, 1990, 2000, 2010, 2020];
 
 // ── Fetch tracks from a Spotify playlist ────────────────────────────
 
@@ -70,58 +60,62 @@ function parseTrackItems(items, tracks) {
   }
 }
 
-// ── Search for a Spotify playlist by name ───────────────────────────
+// ── Search for popular tracks by decade ──────────────────────────────
 
-async function searchForPlaylist(query) {
-  if (resolvedDecadeIds[query]) return resolvedDecadeIds[query];
+async function searchTracksByDecade(decade) {
+  const tracks = [];
+  const startYear = decade;
+  const endYear = decade + 9;
 
-  const token = await getValidToken();
-  const resp = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=playlist&limit=5`,
-    { headers: { 'Authorization': `Bearer ${token}` } }
-  );
+  // Multiple searches with different genre seeds for variety
+  const queries = [
+    `year:${startYear}-${endYear} tag:hipster`,
+    `year:${startYear}-${endYear} genre:pop`,
+    `year:${startYear}-${endYear} genre:rock`,
+    `year:${startYear}-${endYear}`,
+  ];
 
-  if (!resp.ok) return null;
-  const data = await resp.json();
+  const seen = new Set();
 
-  // Prefer Spotify's own playlists (owner "Spotify" or id "spotify")
-  const playlists = (data.playlists?.items || []).filter(p => p != null);
-  const match = playlists.find(p =>
-    p.owner?.id === 'spotify' && p.name?.toLowerCase().includes('all out')
-  ) || playlists[0];
+  for (const q of queries) {
+    const token = await getValidToken();
+    const resp = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=50`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
 
-  if (match) {
-    resolvedDecadeIds[query] = match.id;
-    return match.id;
+    if (!resp.ok) continue;
+    const data = await resp.json();
+
+    for (const t of (data.tracks?.items || [])) {
+      if (!t || !t.uri || seen.has(t.uri)) continue;
+      seen.add(t.uri);
+
+      const year = parseInt(t.album?.release_date?.substring(0, 4), 10) || 0;
+      tracks.push({
+        uri: t.uri,
+        title: t.name,
+        artist: (t.artists || []).map(a => a.name).join(', '),
+        year,
+      });
+    }
+
+    if (tracks.length >= 50) break;
   }
-  return null;
+
+  return tracks;
 }
 
-// ── Fetch all decade playlists ──────────────────────────────────────
+// ── Fetch all decade tracks ─────────────────────────────────────────
 
 async function fetchAllDecadeTracks(onProgress) {
-  const decades = Object.keys(DECADE_SEARCHES).map(Number).sort();
+  const decades = [1970, 1980, 1990, 2000, 2010, 2020];
   const decadeMap = {};
 
   for (let i = 0; i < decades.length; i++) {
     const decade = decades[i];
-    const query = DECADE_SEARCHES[decade];
-    if (onProgress) onProgress(`Finding ${decade}s playlist...`, i, decades.length);
-
-    const playlistId = await searchForPlaylist(query);
-    if (!playlistId) {
-      console.warn(`Could not find playlist for ${query}`);
-      decadeMap[decade] = [];
-      continue;
-    }
-
     if (onProgress) onProgress(`Loading ${decade}s...`, i, decades.length);
-    try {
-      decadeMap[decade] = await fetchPlaylistTracks(playlistId);
-    } catch (e) {
-      console.warn(`Failed to load ${decade}s:`, e.message);
-      decadeMap[decade] = [];
-    }
+    decadeMap[decade] = await searchTracksByDecade(decade);
   }
 
   return decadeMap;
