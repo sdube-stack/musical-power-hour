@@ -120,13 +120,28 @@ async function loadUserPlaylists() {
     const item = document.createElement('button');
     item.className = 'playlist-item';
     item.dataset.id = p.id;
-    item.innerHTML = `
-      <img class="playlist-thumb" src="${p.image || ''}" alt="" />
-      <div class="playlist-info">
-        <div class="playlist-name">${escapeHtml(p.name)}</div>
-        <div class="playlist-meta">${p.trackCount} songs${p.owner ? ' · ' + escapeHtml(p.owner) : ''}</div>
-      </div>
-    `;
+
+    const img = document.createElement('img');
+    img.className = 'playlist-thumb';
+    img.alt = '';
+    if (p.image) img.src = p.image;
+
+    const info = document.createElement('div');
+    info.className = 'playlist-info';
+
+    const name = document.createElement('div');
+    name.className = 'playlist-name';
+    name.textContent = p.name;
+
+    const meta = document.createElement('div');
+    meta.className = 'playlist-meta';
+    meta.textContent = `${p.trackCount} songs${p.owner ? ' · ' + p.owner : ''}`;
+
+    info.appendChild(name);
+    info.appendChild(meta);
+    item.appendChild(img);
+    item.appendChild(info);
+
     item.addEventListener('click', () => {
       document.querySelectorAll('.playlist-item').forEach(i => i.classList.remove('selected'));
       item.classList.add('selected');
@@ -134,12 +149,6 @@ async function loadUserPlaylists() {
     });
     $list.appendChild(item);
   }
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 // ── Loading State ───────────────────────────────────────────────────
