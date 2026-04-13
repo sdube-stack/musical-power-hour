@@ -85,7 +85,7 @@ async function searchForPlaylist(query) {
   const data = await resp.json();
 
   // Prefer Spotify's own playlists (owner "Spotify" or id "spotify")
-  const playlists = data.playlists?.items || [];
+  const playlists = (data.playlists?.items || []).filter(p => p != null);
   const match = playlists.find(p =>
     p.owner?.id === 'spotify' && p.name?.toLowerCase().includes('all out')
   ) || playlists[0];
