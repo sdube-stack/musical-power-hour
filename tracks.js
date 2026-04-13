@@ -15,10 +15,10 @@ async function loadBillboard() {
 // ── Report wrong songs (Google Form submission) ────────────────────
 
 // Replace these with your Google Form values
-const REPORT_FORM_ID = 'YOUR_FORM_ID_HERE';
-const REPORT_FIELD_TITLE = 'entry.TITLE_FIELD_ID';
-const REPORT_FIELD_ARTIST = 'entry.ARTIST_FIELD_ID';
-const REPORT_FIELD_YEAR = 'entry.YEAR_FIELD_ID';
+const REPORT_FORM_ID = '1FAIpQLSceBOulnR21w1JR_Ynj2rrE87IbxZYjwECL3lbQ7nl8BeyS7g';
+const REPORT_FIELD_TITLE = 'entry.295455205';
+const REPORT_FIELD_ARTIST = 'entry.1152023199';
+const REPORT_FIELD_YEAR = 'entry.40724187';
 
 let reportsThisSession = 0;
 const MAX_REPORTS_PER_SESSION = 5;
