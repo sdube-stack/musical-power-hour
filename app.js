@@ -167,32 +167,15 @@ function hideLoading() {
 // ── Playlist Builders ───────────────────────────────────────────────
 
 async function buildShufflePlaylist() {
-  const decadeMap = await fetchAllDecadeTracks((msg, i, total) => {
-    updateLoading(`${msg} (${i + 1}/${total})`);
-  });
-
-  const allTracks = Object.values(decadeMap).flat();
-  if (allTracks.length === 0) throw new Error('No tracks loaded');
-
-  return shuffleTracks(allTracks).slice(0, 60);
+  const tracks = await buildBillboardShufflePlaylist((msg) => updateLoading(msg));
+  if (tracks.length === 0) throw new Error('No tracks found on Spotify');
+  return tracks;
 }
 
 async function buildDecadePlaylist() {
-  const decadeMap = await fetchAllDecadeTracks((msg, i, total) => {
-    updateLoading(`${msg} (${i + 1}/${total})`);
-  });
-
-  const decades = Object.keys(decadeMap).map(Number).sort();
-  const result = [];
-
-  for (const decade of decades) {
-    const tracks = decadeMap[decade] || [];
-    const picked = shuffleTracks(tracks).slice(0, SONGS_PER_DECADE);
-    result.push(...picked);
-  }
-
-  if (result.length === 0) throw new Error('No tracks loaded');
-  return result;
+  const tracks = await buildBillboardDecadePlaylist((msg) => updateLoading(msg));
+  if (tracks.length === 0) throw new Error('No tracks found on Spotify');
+  return tracks;
 }
 
 async function buildCustomPlaylist() {
@@ -268,6 +251,7 @@ async function startRound() {
   // Reset UI to hidden state
   $centerStage.className = 'center-stage phase-hidden';
   $questionMark.classList.remove('hidden');
+  document.getElementById('report-btn').classList.add('hidden');
   $albumArt.classList.add('hidden');
   $albumArt.src = '';
   $albumArtBg.style.backgroundImage = '';
@@ -344,6 +328,21 @@ function revealFull() {
   $songTitle.classList.remove('hidden');
   $songArtist.classList.remove('hidden');
   $songYear.classList.remove('hidden');
+
+  // Show report button (only for billboard-sourced tracks)
+  const $report = document.getElementById('report-btn');
+  if (track.originalTitle) {
+    $report.classList.remove('hidden');
+    $report.onclick = () => {
+      reportSong(track.originalArtist, track.originalTitle);
+      $report.textContent = 'Reported — skipped next time';
+      $report.disabled = true;
+    };
+    $report.textContent = 'Wrong song?';
+    $report.disabled = false;
+  } else {
+    $report.classList.add('hidden');
+  }
 }
 
 async function advanceToNext() {
