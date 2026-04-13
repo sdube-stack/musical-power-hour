@@ -331,12 +331,14 @@ function revealFull() {
 
   // Show report button (only for billboard-sourced tracks)
   const $report = document.getElementById('report-btn');
-  if (track.originalTitle) {
+  if (track.originalTitle && canReport()) {
     $report.classList.remove('hidden');
     $report.onclick = () => {
-      reportSong(track.originalArtist, track.originalTitle);
-      $report.textContent = 'Reported — skipped next time';
-      $report.disabled = true;
+      const sent = reportSong(track.originalArtist, track.originalTitle, track.year);
+      if (sent) {
+        $report.textContent = 'Reported — thanks!';
+        $report.disabled = true;
+      }
     };
     $report.textContent = 'Wrong song?';
     $report.disabled = false;

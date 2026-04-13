@@ -12,26 +12,37 @@ async function loadBillboard() {
   return billboardData;
 }
 
-// ── Reported songs (persisted in localStorage) ──────────────────────
+// ── Report wrong songs (Google Form submission) ────────────────────
 
-function getReportedSongs() {
-  try {
-    return JSON.parse(localStorage.getItem('reported_songs') || '[]');
-  } catch { return []; }
-}
+// Replace these with your Google Form values
+const REPORT_FORM_ID = 'YOUR_FORM_ID_HERE';
+const REPORT_FIELD_TITLE = 'entry.TITLE_FIELD_ID';
+const REPORT_FIELD_ARTIST = 'entry.ARTIST_FIELD_ID';
+const REPORT_FIELD_YEAR = 'entry.YEAR_FIELD_ID';
 
-function reportSong(artist, title) {
-  const reported = getReportedSongs();
-  const key = `${artist}|||${title}`.toLowerCase();
-  if (!reported.includes(key)) {
-    reported.push(key);
-    localStorage.setItem('reported_songs', JSON.stringify(reported));
+let reportsThisSession = 0;
+const MAX_REPORTS_PER_SESSION = 5;
+
+function reportSong(artist, title, year) {
+  if (reportsThisSession >= MAX_REPORTS_PER_SESSION) return false;
+  reportsThisSession++;
+
+  // Submit to Google Form (fire-and-forget, no-cors)
+  if (REPORT_FORM_ID !== 'YOUR_FORM_ID_HERE') {
+    const url = `https://docs.google.com/forms/d/e/${REPORT_FORM_ID}/formResponse`;
+    const body = new URLSearchParams({
+      [REPORT_FIELD_TITLE]: title,
+      [REPORT_FIELD_ARTIST]: artist,
+      [REPORT_FIELD_YEAR]: String(year || ''),
+    });
+    fetch(url, { method: 'POST', body, mode: 'no-cors' }).catch(() => {});
   }
+
+  return true;
 }
 
-function isSongReported(artist, title) {
-  const reported = getReportedSongs();
-  return reported.includes(`${artist}|||${title}`.toLowerCase());
+function canReport() {
+  return reportsThisSession < MAX_REPORTS_PER_SESSION;
 }
 
 // ── Search Spotify for a specific song ──────────────────────────────
@@ -79,18 +90,13 @@ async function searchBatch(songs, onProgress) {
 // ── Pick random songs from billboard data ───────────────────────────
 
 function pickSongsFromBillboard(data, decade, count) {
-  const reported = getReportedSongs();
   const startYear = decade;
   const endYear = decade + 9;
   const pool = [];
 
   for (let y = startYear; y <= endYear; y++) {
-    const yearSongs = data[y] || [];
-    for (const s of yearSongs) {
-      const key = `${s.artist}|||${s.title}`.toLowerCase();
-      if (!reported.includes(key)) {
-        pool.push(s);
-      }
+    for (const s of (data[y] || [])) {
+      pool.push(s);
     }
   }
 
