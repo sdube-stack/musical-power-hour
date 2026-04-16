@@ -324,6 +324,20 @@ body {
   font-size: 1.1rem;
 }
 
+.btn-quit {
+  margin-top: 1rem;
+  background: transparent;
+  color: var(--text-dim);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  font-size: 1rem;
+  padding: 0.7rem 2rem;
+}
+
+.btn-quit:hover {
+  border-color: #ff4444;
+  color: #ff4444;
+}
+
 /* ── Toast ─────────────────────────────────────────────────────── */
 #toast {
   position: fixed;
@@ -571,4 +585,100 @@ body {
 
 .status-bar a:hover {
   color: var(--text);
+}
+
+/* ── Mobile Pause Button (hidden on desktop) ─────────────────────── */
+.mobile-pause-btn {
+  display: none;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-dim);
+  padding: 0.25rem 0.8rem;
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* ── Pause Overlay Actions ───────────────────────────────────────── */
+.pause-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.pause-resume-btn {
+  font-size: 1.1rem;
+  padding: 0.8rem 2.5rem;
+}
+
+/* ── Responsive: Mobile ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* Show mobile controls, hide desktop hints */
+  .desktop-hint { display: none; }
+  .mobile-pause-btn { display: inline-block; }
+
+  /* Login screen */
+  #login-screen h1 { font-size: 2rem; }
+  #login-screen p { font-size: 0.95rem; }
+  #login-screen { gap: 1.2rem; padding: 1rem; }
+
+  /* Buttons */
+  .btn { padding: 0.7rem 2rem; font-size: 1rem; }
+  .btn-gold { font-size: 1.1rem; padding: 0.8rem 2rem; }
+
+  /* Top bar */
+  .top-bar { padding: 0.6rem 1rem; }
+  #song-counter { font-size: 0.8rem; }
+  .progress-bar { margin: 0 0.8rem; }
+
+  /* Center stage */
+  .center-stage { padding: 0.5rem 1rem; gap: 0.5rem; }
+
+  /* Game title */
+  .game-title { font-size: 1.8rem; }
+
+  /* Timer ring */
+  .timer-container { width: 100px; height: 100px; }
+  .timer-ring { width: 100px; height: 100px; }
+  #timer-text { font-size: 1.4rem; }
+
+  /* Question mark */
+  #question-mark { font-size: 3rem; }
+
+  /* Album art */
+  #album-art { width: 180px; height: 180px; }
+
+  /* Song info */
+  #song-title { font-size: 1.4rem; }
+  #song-artist { font-size: 1.1rem; }
+  #song-year { font-size: 0.85rem; }
+
+  /* Decade label */
+  #decade-label { font-size: 1rem; padding: 0.2rem 0.7rem; }
+
+  /* Mode selector */
+  .mode-selector { flex-wrap: wrap; justify-content: center; }
+  .mode-btn { padding: 0.4rem 0.9rem; font-size: 0.85rem; }
+
+  /* Playlist picker */
+  .playlist-picker { max-width: 100%; }
+  .playlist-list { max-height: 180px; }
+
+  /* Status bar */
+  .status-bar { padding: 0.6rem 1rem; }
+
+  /* Pause overlay */
+  #pause-overlay h2 { font-size: 2rem; }
+  .pause-resume-btn { font-size: 1rem; padding: 0.7rem 2rem; }
+
+  /* Game over */
+  #gameover-screen h1 { font-size: 2.2rem; }
+  #gameover-screen p { font-size: 1rem; }
+  #gameover-screen { gap: 1.2rem; padding: 1rem; }
+
+  /* Toast */
+  #toast { font-size: 0.85rem; padding: 0.6rem 1.2rem; bottom: 1rem; }
 }

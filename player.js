@@ -5,12 +5,46 @@ let deviceId = null;
 let playerReady = false;
 let currentAlbumArt = null;
 
+// Mobile browsers don't support the Web Playback SDK — use Spotify Connect instead
+const useMobilePlayback = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 // Callbacks the game can hook into
 let onPlayerReady = null;
 let onPlayerError = null;
 let onPlaybackStateChanged = null;
 
 function initPlayer() {
+  if (useMobilePlayback) return initMobilePlayer();
+  return initDesktopPlayer();
+}
+
+// ── Mobile: Spotify Connect (play through external Spotify app) ─────
+
+async function initMobilePlayer() {
+  const device = await findExternalDevice();
+  if (device) {
+    deviceId = device.id;
+    playerReady = true;
+    console.log('Using external Spotify device:', device.name);
+    return deviceId;
+  }
+  throw new Error('No Spotify device found');
+}
+
+async function findExternalDevice() {
+  const token = await getValidToken();
+  const resp = await fetch('https://api.spotify.com/v1/me/player/devices', {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!resp.ok) return null;
+  const data = await resp.json();
+  // Prefer active device, then first available
+  return data.devices?.find(d => d.is_active) || data.devices?.[0] || null;
+}
+
+// ── Desktop: Web Playback SDK ───────────────────────────────────────
+
+function initDesktopPlayer() {
   return new Promise((resolve, reject) => {
     if (typeof Spotify === 'undefined') {
       reject(new Error('Spotify SDK not loaded'));
@@ -107,7 +141,7 @@ function disconnectPlayer() {
   if (spotifyPlayer) {
     spotifyPlayer.disconnect();
     spotifyPlayer = null;
-    deviceId = null;
-    playerReady = false;
   }
+  deviceId = null;
+  playerReady = false;
 }

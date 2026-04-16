@@ -103,7 +103,8 @@
 
     <!-- Status bar -->
     <div class="status-bar">
-      <kbd>Space</kbd> to pause/resume
+      <span class="desktop-hint"><kbd>Space</kbd> or <kbd>Esc</kbd> to pause</span>
+      <button id="pause-btn" class="mobile-pause-btn" onclick="togglePause()">⏸ Pause</button>
       <span class="status-sep">|</span>
       <a href="#" id="logout-link" onclick="doLogout(); return false;">Logout</a>
     </div>
@@ -112,7 +113,11 @@
   <!-- ── Pause Overlay ─────────────────────────────────────────── -->
   <div id="pause-overlay" class="hidden">
     <h2>Paused</h2>
-    <p>Press <kbd>Space</kbd> to resume</p>
+    <p class="desktop-hint">Press <kbd>Space</kbd> or <kbd>Esc</kbd> to resume</p>
+    <div class="pause-actions">
+      <button class="btn btn-gold pause-resume-btn" onclick="togglePause()">Resume</button>
+      <button class="btn btn-quit" onclick="quitGame()">Quit Game</button>
+    </div>
   </div>
 
   <!-- ── Game Over Screen ──────────────────────────────────────── -->
@@ -132,9 +137,9 @@
   <script src="app.js"></script>
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <script>
-    // Spotify SDK calls this when ready
+    // Spotify SDK calls this when ready (desktop only — mobile uses Spotify Connect)
     window.onSpotifyWebPlaybackSDKReady = () => {
-      if (isLoggedIn()) {
+      if (isLoggedIn() && !useMobilePlayback) {
         initPlayer().catch(err => console.error('Player init failed:', err));
       }
     };

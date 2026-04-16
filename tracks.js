@@ -67,6 +67,7 @@ async function searchSpotifyTrack(artist, title, billboardYear) {
     uri: t.uri,
     title: cleanTitle(t.name),
     artist: (t.artists || []).map(a => a.name).join(', '),
+    albumArt: t.album?.images?.[0]?.url || null,
     year: billboardYear || parseInt(t.album?.release_date?.substring(0, 4), 10) || 0,
     originalTitle: title,
     originalArtist: artist,
@@ -215,6 +216,7 @@ function parseTrackItems(items, tracks) {
       uri: t.uri,
       title: t.name,
       artist: (t.artists || []).map(a => a.name).join(', '),
+      albumArt: t.album?.images?.[0]?.url || null,
       year,
     });
   }

@@ -44,7 +44,7 @@ function initGame() {
   }
 
   document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && (gameState === 'PLAYING' || gameState === 'PAUSED')) {
+    if ((e.code === 'Space' || e.code === 'Escape') && (gameState === 'PLAYING' || gameState === 'PAUSED')) {
       e.preventDefault();
       togglePause();
     }
@@ -66,6 +66,12 @@ function showReadyState() {
 }
 
 async function initSpotifySDK() {
+  if (useMobilePlayback) {
+    try { await initPlayer(); } catch (e) {
+      console.log('No Spotify device found yet — will retry on game start');
+    }
+    return;
+  }
   if (typeof Spotify === 'undefined') {
     window.onSpotifyWebPlaybackSDKReady = () => initPlayer();
   } else {
@@ -200,8 +206,16 @@ async function buildCustomPlaylist() {
 // ── Game Start ──────────────────────────────────────────────────────
 
 async function startGame() {
+  // On mobile, retry finding an external Spotify device
+  if (useMobilePlayback && !playerReady) {
+    try { await initPlayer(); } catch (e) {}
+  }
+
   if (!playerReady) {
-    showToast('Waiting for Spotify player...', 2000);
+    const msg = useMobilePlayback
+      ? 'Open Spotify on your phone first, then try again'
+      : 'Waiting for Spotify player...';
+    showToast(msg, 3000);
     return;
   }
 
@@ -277,7 +291,12 @@ async function startRound() {
   } catch (err) {
     console.error('Failed to play track:', err);
     showToast(`Skipping: ${track.title} (unavailable)`, 2000);
-    setTimeout(() => advanceToNext(), 2000);
+    playlist.splice(currentIndex, 1);
+    if (currentIndex >= playlist.length) {
+      setTimeout(() => endGame(), 2000);
+    } else {
+      setTimeout(() => startRound(), 2000);
+    }
   }
 }
 
@@ -315,7 +334,7 @@ function revealAlbumArt() {
   $centerStage.className = 'center-stage phase-art';
   $questionMark.classList.add('hidden');
 
-  const artUrl = getAlbumArt();
+  const artUrl = getAlbumArt() || playlist[currentIndex]?.albumArt;
   if (artUrl) {
     $albumArt.src = artUrl;
     $albumArt.classList.remove('hidden');
@@ -378,6 +397,15 @@ async function endGame() {
 
   $gameScreen.classList.add('hidden');
   $gameOverScreen.classList.remove('hidden');
+}
+
+// ── Quit Game ───────────────────────────────────────────────────────
+
+async function quitGame() {
+  clearInterval(timerInterval);
+  await stopPlayback();
+  $pauseOverlay.classList.add('hidden');
+  restartGame();
 }
 
 // ── Pause / Resume ──────────────────────────────────────────────────
