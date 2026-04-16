@@ -49,16 +49,26 @@ function canReport() {
 // ── Search Spotify for a specific song ──────────────────────────────
 
 async function searchSpotifyTrack(artist, title, billboardYear) {
-  const token = await getValidToken();
   const q = `track:${title} artist:${artist}`;
-  const resp = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`,
-    { headers: { 'Authorization': `Bearer ${token}` } }
-  );
+  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`;
+
+  let resp;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const token = await getValidToken();
+    resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+
+    if (resp.status === 429) {
+      const retryAfter = parseInt(resp.headers.get('Retry-After') || '2', 10);
+      console.warn(`Rate limited, waiting ${retryAfter}s before retry...`);
+      await new Promise(r => setTimeout(r, retryAfter * 1000));
+      continue;
+    }
+    break;
+  }
+
   if (!resp.ok) {
     console.error(`Spotify search failed (${resp.status}) for: ${q}`);
     if (resp.status === 401) throw new Error('Spotify session expired — please log out and log back in');
-    if (resp.status === 429) throw new Error('Spotify rate limit hit — wait a moment and try again');
     return null;
   }
   const data = await resp.json();
@@ -91,7 +101,7 @@ function cleanTitle(title) {
 // ── Parallel batch search ───────────────────────────────────────────
 
 async function searchBatch(songs, onProgress) {
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = 3;
   const results = [];
 
   for (let i = 0; i < songs.length; i += BATCH_SIZE) {
@@ -125,7 +135,7 @@ function pickSongsFromBillboard(data, decade, count) {
 // ── Build playlists from billboard data ─────────────────────────────
 
 async function searchDecadeUntilFull(songs, needed, onProgress, progressOffset) {
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = 3;
   const found = [];
 
   for (let i = 0; i < songs.length && found.length < needed; i += BATCH_SIZE) {
@@ -137,6 +147,8 @@ async function searchDecadeUntilFull(songs, needed, onProgress, progressOffset) 
     for (const r of results) {
       if (r && found.length < needed) found.push(r);
     }
+    // Small delay between batches to avoid Spotify rate limits
+    if (found.length < needed) await new Promise(r => setTimeout(r, 100));
   }
 
   return found;
