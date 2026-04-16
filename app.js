@@ -871,3 +871,10 @@ function restartGame() {
   $progressBar.style.width = '0%';
   gameState = 'READY';
 }
+
+function startOver() {
+  gameType = 'party';
+  gameMode = 'shuffle';
+  selectedPlaylistId = null;
+  restartGame();
+}
