@@ -54,7 +54,12 @@ async function searchSpotifyTrack(artist, title, billboardYear) {
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`,
     { headers: { 'Authorization': `Bearer ${token}` } }
   );
-  if (!resp.ok) return null;
+  if (!resp.ok) {
+    console.error(`Spotify search failed (${resp.status}) for: ${q}`);
+    if (resp.status === 401) throw new Error('Spotify session expired — please log out and log back in');
+    if (resp.status === 429) throw new Error('Spotify rate limit hit — wait a moment and try again');
+    return null;
+  }
   const data = await resp.json();
   const t = data.tracks?.items?.[0];
   if (!t) {

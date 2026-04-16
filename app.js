@@ -217,7 +217,7 @@ async function startGame() {
     const msg = useMobilePlayback
       ? 'Open Spotify on your phone first, then try again'
       : 'Waiting for Spotify player...';
-    showToast(msg, 3000);
+    showToast(msg, 5000);
     return;
   }
 
@@ -235,7 +235,7 @@ async function startGame() {
     hideLoading();
     showReadyState();
     selectMode(gameMode);
-    showToast(err.message, 3000);
+    showToast(err.message, 6000);
     return;
   }
 
@@ -254,7 +254,7 @@ async function startGame() {
       clearInterval(timerInterval);
       await stopPlayback();
       gameState = 'READY';
-      showToast('Spotify is not playing audio. Open Spotify, play any song for a moment, then come back and try again.', 5000);
+      showToast('Spotify is not playing audio. Open Spotify, play any song for a moment, then come back and try again.', 6000);
       restartGame();
       return;
     }
