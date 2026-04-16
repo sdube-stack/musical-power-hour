@@ -72,6 +72,8 @@ async function initSpotifySDK() {
     }
     return;
   }
+  // Load the SDK dynamically (only on desktop — never on mobile)
+  loadSpotifySDK();
   if (typeof Spotify === 'undefined') {
     window.onSpotifyWebPlaybackSDKReady = () => initPlayer();
   } else {
@@ -235,20 +237,6 @@ async function startGame() {
     selectMode(gameMode);
     showToast(err.message, 3000);
     return;
-  }
-
-  // On mobile, transfer playback to the Spotify app before starting
-  if (useMobilePlayback) {
-    try {
-      updateLoading('Connecting to Spotify...');
-      await transferPlaybackToDevice();
-    } catch (e) {
-      hideLoading();
-      showReadyState();
-      selectMode(gameMode);
-      showToast('Could not connect to Spotify. Make sure the app is open and try again.', 4000);
-      return;
-    }
   }
 
   hideLoading();

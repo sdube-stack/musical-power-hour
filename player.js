@@ -1,4 +1,4 @@
-// ── Spotify Web Playback SDK Wrapper ────────────────────────────────
+// ── Spotify Playback ────────────────────────────────────────────────
 
 let spotifyPlayer = null;
 let deviceId = null;
@@ -18,15 +18,19 @@ function initPlayer() {
   return initDesktopPlayer();
 }
 
-// ── Mobile: Spotify Connect (play through external Spotify app) ─────
+// ── Mobile: Spotify Connect (play on user's active device) ──────────
+// We never load the Web Playback SDK on mobile — it registers a phantom
+// "speaker" that captures audio. Instead we just hit the REST API without
+// a device_id so Spotify plays on whatever device is currently active
+// (phone speaker, AirPods, car, etc.).
 
 async function initMobilePlayer() {
   const device = await findExternalDevice();
   if (device) {
-    deviceId = device.id;
+    // Don't store deviceId — we always target the active device
     playerReady = true;
-    console.log('Using external Spotify device:', device.name);
-    return deviceId;
+    console.log('Spotify device found:', device.name);
+    return;
   }
   throw new Error('No Spotify device found');
 }
@@ -38,27 +42,10 @@ async function findExternalDevice() {
   });
   if (!resp.ok) return null;
   const data = await resp.json();
-  // Prefer active device, then first available
   return data.devices?.find(d => d.is_active) || data.devices?.[0] || null;
 }
 
-async function transferPlaybackToDevice() {
-  const token = await getValidToken();
-  const resp = await fetch('https://api.spotify.com/v1/me/player', {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ device_ids: [deviceId], play: false }),
-  });
-  if (!resp.ok && resp.status !== 204) {
-    throw new Error('Could not transfer playback to your device');
-  }
-}
-
 async function checkPlaybackActive() {
-  // Give Spotify a moment to start playing
   await new Promise(r => setTimeout(r, 2000));
   const token = await getValidToken();
   const resp = await fetch('https://api.spotify.com/v1/me/player', {
@@ -70,6 +57,14 @@ async function checkPlaybackActive() {
 }
 
 // ── Desktop: Web Playback SDK ───────────────────────────────────────
+// SDK script is loaded dynamically so it never touches mobile browsers.
+
+function loadSpotifySDK() {
+  if (document.querySelector('script[src*="spotify-player"]')) return;
+  const script = document.createElement('script');
+  script.src = 'https://sdk.scdn.co/spotify-player.js';
+  document.body.appendChild(script);
+}
 
 function initDesktopPlayer() {
   return new Promise((resolve, reject) => {
@@ -129,9 +124,17 @@ function initDesktopPlayer() {
   });
 }
 
+// ── Playback Controls ───────────────────────────────────────────────
+// On mobile, omit device_id so Spotify targets the currently active
+// device. This survives device switches (e.g. connecting AirPods).
+
 async function playTrack(spotifyUri) {
   const token = await getValidToken();
-  const resp = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+  const url = useMobilePlayback
+    ? 'https://api.spotify.com/v1/me/player/play'
+    : `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`;
+
+  let resp = await fetch(url, {
     method: 'PUT',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -139,6 +142,20 @@ async function playTrack(spotifyUri) {
     },
     body: JSON.stringify({ uris: [spotifyUri] }),
   });
+
+  // On mobile, retry once after a brief pause (handles device switching)
+  if (useMobilePlayback && !resp.ok && resp.status !== 204) {
+    await new Promise(r => setTimeout(r, 2000));
+    const retryToken = await getValidToken();
+    resp = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${retryToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ uris: [spotifyUri] }),
+    });
+  }
 
   if (!resp.ok && resp.status !== 204) {
     const text = await resp.text();
@@ -148,7 +165,10 @@ async function playTrack(spotifyUri) {
 
 async function stopPlayback() {
   const token = await getValidToken();
-  await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
+  const url = useMobilePlayback
+    ? 'https://api.spotify.com/v1/me/player/pause'
+    : `https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`;
+  await fetch(url, {
     method: 'PUT',
     headers: { 'Authorization': `Bearer ${token}` },
   });
