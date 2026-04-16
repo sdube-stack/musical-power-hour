@@ -60,7 +60,8 @@ function initGame() {
   }
 
   document.addEventListener('keydown', (e) => {
-    if ((e.code === 'Space' || e.code === 'Escape') && (gameState === 'PLAYING' || gameState === 'PAUSED')) {
+    const pauseKeys = gameType === 'quiz' ? ['Escape'] : ['Space', 'Escape'];
+    if (pauseKeys.includes(e.code) && (gameState === 'PLAYING' || gameState === 'PAUSED')) {
       e.preventDefault();
       togglePause();
     }
