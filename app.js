@@ -560,9 +560,10 @@ function showQuizReveal(track, result) {
   document.getElementById('reveal-artist').innerHTML =
     `<span class="${result.artistCorrect ? 'correct' : 'wrong'}">${result.artistCorrect ? check : cross}</span> ${track.artist}`;
 
+  const guessedYear = document.getElementById('guess-year').value || '—';
   if (result.yearClose) {
     document.getElementById('reveal-year').innerHTML =
-      `<span class="close-enough">~</span> ${track.year} <span class="close-enough-text">Close enough I guess...</span>`;
+      `<span class="close-enough">~</span> ${guessedYear} <span class="close-enough-text">Close enough I guess... The answer is ${track.year}</span>`;
   } else {
     document.getElementById('reveal-year').innerHTML =
       `<span class="${result.yearCorrect ? 'correct' : 'wrong'}">${result.yearCorrect ? check : cross}</span> ${track.year}`;
