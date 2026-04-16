@@ -141,7 +141,21 @@
   <script src="tracks.js"></script>
   <script src="player.js"></script>
   <script src="app.js"></script>
+  <!-- Spotify SDK: only used on desktop (mobile uses Spotify Connect via REST API) -->
   <script>
+    if (!useMobilePlayback) {
+      var s = document.createElement('script');
+      s.src = 'https://sdk.scdn.co/spotify-player.js';
+      document.head.appendChild(s);
+    }
+
+    // Spotify SDK calls this when ready
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      if (isLoggedIn()) {
+        initPlayer().catch(err => console.error('Player init failed:', err));
+      }
+    };
+
     // Boot the game
     document.addEventListener('DOMContentLoaded', initGame);
   </script>

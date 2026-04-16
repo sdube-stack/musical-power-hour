@@ -8,7 +8,6 @@ const DECADES = [1970, 1980, 1990, 2000, 2010, 2020];
 async function loadBillboard() {
   if (billboardData) return billboardData;
   const resp = await fetch('billboard.json');
-  if (!resp.ok) throw new Error(`Could not load song data (HTTP ${resp.status})`);
   billboardData = await resp.json();
   return billboardData;
 }
@@ -49,28 +48,13 @@ function canReport() {
 // ── Search Spotify for a specific song ──────────────────────────────
 
 async function searchSpotifyTrack(artist, title, billboardYear) {
+  const token = await getValidToken();
   const q = `track:${title} artist:${artist}`;
-  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`;
-
-  let resp;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const token = await getValidToken();
-    resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-
-    if (resp.status === 429) {
-      const retryAfter = parseInt(resp.headers.get('Retry-After') || '2', 10);
-      console.warn(`Rate limited, waiting ${retryAfter}s before retry...`);
-      await new Promise(r => setTimeout(r, retryAfter * 1000));
-      continue;
-    }
-    break;
-  }
-
-  if (!resp.ok) {
-    console.error(`Spotify search failed (${resp.status}) for: ${q}`);
-    if (resp.status === 401) throw new Error('Spotify session expired — please log out and log back in');
-    return null;
-  }
+  const resp = await fetch(
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`,
+    { headers: { 'Authorization': `Bearer ${token}` } }
+  );
+  if (!resp.ok) return null;
   const data = await resp.json();
   const t = data.tracks?.items?.[0];
   if (!t) {
@@ -101,7 +85,7 @@ function cleanTitle(title) {
 // ── Parallel batch search ───────────────────────────────────────────
 
 async function searchBatch(songs, onProgress) {
-  const BATCH_SIZE = 3;
+  const BATCH_SIZE = 10;
   const results = [];
 
   for (let i = 0; i < songs.length; i += BATCH_SIZE) {
@@ -135,7 +119,7 @@ function pickSongsFromBillboard(data, decade, count) {
 // ── Build playlists from billboard data ─────────────────────────────
 
 async function searchDecadeUntilFull(songs, needed, onProgress, progressOffset) {
-  const BATCH_SIZE = 3;
+  const BATCH_SIZE = 10;
   const found = [];
 
   for (let i = 0; i < songs.length && found.length < needed; i += BATCH_SIZE) {
@@ -147,8 +131,6 @@ async function searchDecadeUntilFull(songs, needed, onProgress, progressOffset) 
     for (const r of results) {
       if (r && found.length < needed) found.push(r);
     }
-    // Small delay between batches to avoid Spotify rate limits
-    if (found.length < needed) await new Promise(r => setTimeout(r, 100));
   }
 
   return found;
@@ -156,47 +138,33 @@ async function searchDecadeUntilFull(songs, needed, onProgress, progressOffset) 
 
 async function buildBillboardShufflePlaylist(onProgress) {
   const data = await loadBillboard();
-  const years = Object.keys(data);
-  if (years.length === 0) throw new Error('Billboard data is empty');
-
   const result = [];
-  let totalPool = 0;
 
   for (let i = 0; i < DECADES.length; i++) {
     const decade = DECADES[i];
     onProgress?.(`Searching ${decade}s...`);
+    // Pick a large pool, search until we have 10
     const pool = pickSongsFromBillboard(data, decade, 30);
-    totalPool += pool.length;
     const found = await searchDecadeUntilFull(pool, 10, null, 0);
     result.push(...found);
   }
 
-  if (result.length === 0) {
-    throw new Error(`No tracks found on Spotify (${years.length} years loaded, ${totalPool} songs searched). Check browser console for details.`);
-  }
   return shuffleTracks(result);
 }
 
 async function buildBillboardDecadePlaylist(onProgress) {
   const data = await loadBillboard();
-  const years = Object.keys(data);
-  if (years.length === 0) throw new Error('Billboard data is empty');
-
   const result = [];
-  let totalPool = 0;
 
   for (let i = 0; i < DECADES.length; i++) {
     const decade = DECADES[i];
     onProgress?.(`Searching ${decade}s...`);
+    // Pick a large pool, search until we have 10
     const pool = pickSongsFromBillboard(data, decade, 30);
-    totalPool += pool.length;
     const found = await searchDecadeUntilFull(pool, 10, null, 0);
     result.push(...found);
   }
 
-  if (result.length === 0) {
-    throw new Error(`No tracks found on Spotify (${years.length} years loaded, ${totalPool} songs searched). Check browser console for details.`);
-  }
   return result;
 }
 

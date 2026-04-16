@@ -67,13 +67,13 @@ function showReadyState() {
 
 async function initSpotifySDK() {
   if (useMobilePlayback) {
+    // Mobile: find an external Spotify device (no SDK needed)
     try { await initPlayer(); } catch (e) {
       console.log('No Spotify device found yet — will retry on game start');
     }
     return;
   }
-  // Load the SDK dynamically (only on desktop — never on mobile)
-  loadSpotifySDK();
+  // Desktop: wait for the Web Playback SDK to load
   if (typeof Spotify === 'undefined') {
     window.onSpotifyWebPlaybackSDKReady = () => initPlayer();
   } else {
@@ -184,11 +184,15 @@ function hideLoading() {
 // ── Playlist Builders ───────────────────────────────────────────────
 
 async function buildShufflePlaylist() {
-  return await buildBillboardShufflePlaylist((msg) => updateLoading(msg));
+  const tracks = await buildBillboardShufflePlaylist((msg) => updateLoading(msg));
+  if (tracks.length === 0) throw new Error('No tracks found on Spotify');
+  return tracks;
 }
 
 async function buildDecadePlaylist() {
-  return await buildBillboardDecadePlaylist((msg) => updateLoading(msg));
+  const tracks = await buildBillboardDecadePlaylist((msg) => updateLoading(msg));
+  if (tracks.length === 0) throw new Error('No tracks found on Spotify');
+  return tracks;
 }
 
 async function buildCustomPlaylist() {
@@ -242,20 +246,6 @@ async function startGame() {
   gameState = 'PLAYING';
 
   await startRound();
-
-  // On mobile, verify audio is actually playing — don't fail silently
-  if (useMobilePlayback) {
-    const isPlaying = await checkPlaybackActive();
-    if (!isPlaying) {
-      clearInterval(timerInterval);
-      await stopPlayback();
-      gameState = 'READY';
-      showToast('Spotify is not playing audio. Open Spotify, play any song for a moment, then come back and try again.', 6000);
-      restartGame();
-      return;
-    }
-  }
-
   timerInterval = setInterval(gameLoop, 100);
 }
 
