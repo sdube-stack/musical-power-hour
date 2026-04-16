@@ -45,9 +45,29 @@ function canReport() {
   return reportsThisSession < MAX_REPORTS_PER_SESSION;
 }
 
+// ── Search Cache (localStorage) ─────────────────────────────────────
+
+const SEARCH_CACHE_KEY = 'mph_search_cache';
+
+function getSearchCache() {
+  try { return JSON.parse(localStorage.getItem(SEARCH_CACHE_KEY) || '{}'); } catch (e) { return {}; }
+}
+
+function setSearchCache(cache) {
+  try { localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(cache)); } catch (e) {}
+}
+
 // ── Search Spotify for a specific song ──────────────────────────────
 
 async function searchSpotifyTrack(artist, title, billboardYear) {
+  const cacheKey = `${artist}|||${title}`;
+  const cache = getSearchCache();
+
+  // Return cached result if available (null means "not found" is also cached)
+  if (cacheKey in cache) {
+    return cache[cacheKey];
+  }
+
   const token = await getValidToken();
   const q = `track:${title} artist:${artist}`;
   const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`;
@@ -60,16 +80,18 @@ async function searchSpotifyTrack(artist, title, billboardYear) {
     await new Promise(r => setTimeout(r, wait * 1000));
   }
 
-  if (!resp.ok) return null;
+  if (!resp.ok) return null; // Don't cache errors — retry next time
+
   const data = await resp.json();
   const t = data.tracks?.items?.[0];
   if (!t) {
-    // Auto-report songs not found on Spotify
     reportSong(artist, title + ' [NOT FOUND ON SPOTIFY]', billboardYear, true);
+    cache[cacheKey] = null;
+    setSearchCache(cache);
     return null;
   }
 
-  return {
+  const result = {
     uri: t.uri,
     title: cleanTitle(t.name),
     artist: (t.artists || []).map(a => a.name).join(', '),
@@ -78,6 +100,10 @@ async function searchSpotifyTrack(artist, title, billboardYear) {
     originalTitle: title,
     originalArtist: artist,
   };
+
+  cache[cacheKey] = result;
+  setSearchCache(cache);
+  return result;
 }
 
 function cleanTitle(title) {
