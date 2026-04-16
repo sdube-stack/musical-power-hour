@@ -50,10 +50,16 @@ function canReport() {
 async function searchSpotifyTrack(artist, title, billboardYear) {
   const token = await getValidToken();
   const q = `track:${title} artist:${artist}`;
-  const resp = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`,
-    { headers: { 'Authorization': `Bearer ${token}` } }
-  );
+  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`;
+  let resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+
+  // On rate limit, wait and retry once
+  if (resp.status === 429) {
+    const wait = parseInt(resp.headers.get('Retry-After') || '3', 10);
+    await new Promise(r => setTimeout(r, wait * 1000));
+    resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+  }
+
   if (!resp.ok) return null;
   const data = await resp.json();
   const t = data.tracks?.items?.[0];
