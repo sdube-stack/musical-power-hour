@@ -184,15 +184,11 @@ function hideLoading() {
 // ── Playlist Builders ───────────────────────────────────────────────
 
 async function buildShufflePlaylist() {
-  const tracks = await buildBillboardShufflePlaylist((msg) => updateLoading(msg));
-  if (tracks.length === 0) throw new Error('No tracks found on Spotify');
-  return tracks;
+  return await buildBillboardShufflePlaylist((msg) => updateLoading(msg));
 }
 
 async function buildDecadePlaylist() {
-  const tracks = await buildBillboardDecadePlaylist((msg) => updateLoading(msg));
-  if (tracks.length === 0) throw new Error('No tracks found on Spotify');
-  return tracks;
+  return await buildBillboardDecadePlaylist((msg) => updateLoading(msg));
 }
 
 async function buildCustomPlaylist() {

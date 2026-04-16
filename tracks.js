@@ -8,6 +8,7 @@ const DECADES = [1970, 1980, 1990, 2000, 2010, 2020];
 async function loadBillboard() {
   if (billboardData) return billboardData;
   const resp = await fetch('billboard.json');
+  if (!resp.ok) throw new Error(`Could not load song data (HTTP ${resp.status})`);
   billboardData = await resp.json();
   return billboardData;
 }
@@ -143,33 +144,47 @@ async function searchDecadeUntilFull(songs, needed, onProgress, progressOffset) 
 
 async function buildBillboardShufflePlaylist(onProgress) {
   const data = await loadBillboard();
+  const years = Object.keys(data);
+  if (years.length === 0) throw new Error('Billboard data is empty');
+
   const result = [];
+  let totalPool = 0;
 
   for (let i = 0; i < DECADES.length; i++) {
     const decade = DECADES[i];
     onProgress?.(`Searching ${decade}s...`);
-    // Pick a large pool, search until we have 10
     const pool = pickSongsFromBillboard(data, decade, 30);
+    totalPool += pool.length;
     const found = await searchDecadeUntilFull(pool, 10, null, 0);
     result.push(...found);
   }
 
+  if (result.length === 0) {
+    throw new Error(`No tracks found on Spotify (${years.length} years loaded, ${totalPool} songs searched). Check browser console for details.`);
+  }
   return shuffleTracks(result);
 }
 
 async function buildBillboardDecadePlaylist(onProgress) {
   const data = await loadBillboard();
+  const years = Object.keys(data);
+  if (years.length === 0) throw new Error('Billboard data is empty');
+
   const result = [];
+  let totalPool = 0;
 
   for (let i = 0; i < DECADES.length; i++) {
     const decade = DECADES[i];
     onProgress?.(`Searching ${decade}s...`);
-    // Pick a large pool, search until we have 10
     const pool = pickSongsFromBillboard(data, decade, 30);
+    totalPool += pool.length;
     const found = await searchDecadeUntilFull(pool, 10, null, 0);
     result.push(...found);
   }
 
+  if (result.length === 0) {
+    throw new Error(`No tracks found on Spotify (${years.length} years loaded, ${totalPool} songs searched). Check browser console for details.`);
+  }
   return result;
 }
 
