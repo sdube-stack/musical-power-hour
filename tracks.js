@@ -125,18 +125,13 @@ function pickSongsFromBillboard(data, decade, count) {
 // ── Build playlists from billboard data ─────────────────────────────
 
 async function searchDecadeUntilFull(songs, needed, onProgress, progressOffset) {
-  const BATCH_SIZE = 10;
   const found = [];
 
-  for (let i = 0; i < songs.length && found.length < needed; i += BATCH_SIZE) {
+  for (let i = 0; i < songs.length && found.length < needed; i++) {
     if (onProgress) onProgress(progressOffset + found.length);
-    const batch = songs.slice(i, i + BATCH_SIZE);
-    const results = await Promise.all(
-      batch.map(s => searchSpotifyTrack(s.artist, s.title, s.billboardYear))
-    );
-    for (const r of results) {
-      if (r && found.length < needed) found.push(r);
-    }
+    const s = songs[i];
+    const r = await searchSpotifyTrack(s.artist, s.title, s.billboardYear);
+    if (r) found.push(r);
   }
 
   return found;
