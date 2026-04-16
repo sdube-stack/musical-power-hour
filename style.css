@@ -587,6 +587,18 @@ body {
   color: var(--text);
 }
 
+/* ── Mobile Spotify Hint (hidden on desktop) ─────────────────────── */
+.mobile-spotify-hint {
+  display: none;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+}
+
 /* ── Mobile Pause Button (hidden on desktop) ─────────────────────── */
 .mobile-pause-btn {
   display: none;
@@ -619,6 +631,7 @@ body {
   /* Show mobile controls, hide desktop hints */
   .desktop-hint { display: none; }
   .mobile-pause-btn { display: inline-block; }
+  .mobile-spotify-hint { display: block; }
 
   /* Login screen */
   #login-screen h1 { font-size: 2rem; }

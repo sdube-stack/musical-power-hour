@@ -42,6 +42,33 @@ async function findExternalDevice() {
   return data.devices?.find(d => d.is_active) || data.devices?.[0] || null;
 }
 
+async function transferPlaybackToDevice() {
+  const token = await getValidToken();
+  const resp = await fetch('https://api.spotify.com/v1/me/player', {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ device_ids: [deviceId], play: false }),
+  });
+  if (!resp.ok && resp.status !== 204) {
+    throw new Error('Could not transfer playback to your device');
+  }
+}
+
+async function checkPlaybackActive() {
+  // Give Spotify a moment to start playing
+  await new Promise(r => setTimeout(r, 2000));
+  const token = await getValidToken();
+  const resp = await fetch('https://api.spotify.com/v1/me/player', {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!resp.ok || resp.status === 204) return false;
+  const data = await resp.json();
+  return data.is_playing === true;
+}
+
 // ── Desktop: Web Playback SDK ───────────────────────────────────────
 
 function initDesktopPlayer() {

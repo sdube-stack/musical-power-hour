@@ -237,6 +237,20 @@ async function startGame() {
     return;
   }
 
+  // On mobile, transfer playback to the Spotify app before starting
+  if (useMobilePlayback) {
+    try {
+      updateLoading('Connecting to Spotify...');
+      await transferPlaybackToDevice();
+    } catch (e) {
+      hideLoading();
+      showReadyState();
+      selectMode(gameMode);
+      showToast('Could not connect to Spotify. Make sure the app is open and try again.', 4000);
+      return;
+    }
+  }
+
   hideLoading();
   document.getElementById('game-title').classList.add('hidden');
   document.getElementById('timer-container').classList.remove('hidden');
@@ -244,6 +258,20 @@ async function startGame() {
   gameState = 'PLAYING';
 
   await startRound();
+
+  // On mobile, verify audio is actually playing — don't fail silently
+  if (useMobilePlayback) {
+    const isPlaying = await checkPlaybackActive();
+    if (!isPlaying) {
+      clearInterval(timerInterval);
+      await stopPlayback();
+      gameState = 'READY';
+      showToast('Spotify is not playing audio. Open Spotify, play any song for a moment, then come back and try again.', 5000);
+      restartGame();
+      return;
+    }
+  }
+
   timerInterval = setInterval(gameLoop, 100);
 }
 
