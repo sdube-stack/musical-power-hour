@@ -47,9 +47,11 @@ function matchAnswer(guess, correct) {
 
 function matchArtist(guess, correct) {
   if (matchAnswer(guess, correct)) return true;
-  // Strip feat./ft./featuring/& and try primary artist only
-  const primary = correct.replace(/\s*(feat\.?|ft\.?|featuring|&|,)\s*.*/i, '').trim();
-  if (primary !== correct && matchAnswer(guess, primary)) return true;
+  // Split on common separators and match any individual artist
+  const parts = correct.split(/\s*(?:,|&|\band\b|feat\.?|ft\.?|featuring)\s*/i).filter(Boolean);
+  for (const part of parts) {
+    if (matchAnswer(guess, part)) return true;
+  }
   return false;
 }
 
