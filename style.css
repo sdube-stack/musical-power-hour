@@ -626,6 +626,352 @@ body {
   padding: 0.8rem 2.5rem;
 }
 
+/* ── Type Selector (Party / Quiz) ─────────────────────────────────── */
+.type-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.type-btn {
+  padding: 0.5rem 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.type-btn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--text);
+}
+
+.type-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(255, 215, 0, 0.08);
+}
+
+/* ── Quiz Setup ──────────────────────────────────────────────────── */
+.quiz-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.quiz-setup input[type="text"] {
+  width: 100%;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  text-align: center;
+}
+
+.quiz-setup input:focus {
+  border-color: var(--gold);
+}
+
+.quiz-setup input::placeholder {
+  color: var(--text-dim);
+}
+
+.song-count-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.song-count-row label {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.song-count-row input[type="number"] {
+  width: 70px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  text-align: center;
+}
+
+.song-count-row input:focus {
+  border-color: var(--gold);
+}
+
+/* ── Quiz Guess Form ─────────────────────────────────────────────── */
+.quiz-guess {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.quiz-guess input {
+  width: 100%;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  text-align: center;
+}
+
+.quiz-guess input:focus {
+  border-color: var(--gold);
+}
+
+.quiz-guess input::placeholder {
+  color: var(--text-dim);
+}
+
+.quiz-guess input:disabled {
+  opacity: 0.4;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, var(--gold), #ff8c00);
+  color: #000;
+  font-size: 1rem;
+  padding: 0.6rem 2rem;
+  margin-top: 0.2rem;
+}
+
+.btn-submit:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+}
+
+/* ── Quiz Reveal ─────────────────────────────────────────────────── */
+.quiz-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  animation: revealSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.reveal-row {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.reveal-row .correct {
+  color: #4caf50;
+  font-weight: 800;
+  margin-right: 0.4rem;
+}
+
+.reveal-row .wrong {
+  color: #ff4444;
+  font-weight: 800;
+  margin-right: 0.4rem;
+}
+
+.reveal-row .close-enough {
+  color: #ffa726;
+  font-weight: 800;
+  margin-right: 0.4rem;
+}
+
+.close-enough-text {
+  font-size: 0.8rem;
+  color: #ffa726;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.reveal-points {
+  margin-top: 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.reveal-points.great { color: var(--gold); }
+.reveal-points.ok { color: var(--text); }
+.reveal-points.none { color: var(--text-dim); }
+
+/* ── Quiz Score Screen ───────────────────────────────────────────── */
+#quiz-score-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+#quiz-score-screen h1 {
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--gold), #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.quiz-final-name {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.quiz-final-score {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.quiz-final-ratio {
+  font-size: 1rem;
+  color: var(--text-dim);
+}
+
+.quiz-save-area {
+  margin-top: 0.5rem;
+}
+
+/* ── Scoreboard Overlay ──────────────────────────────────────────── */
+#scoreboard-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scoreboard-panel {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.scoreboard-panel h2 {
+  text-align: center;
+  font-size: 1.5rem;
+  color: var(--gold);
+}
+
+.scoreboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.scoreboard-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+
+.scoreboard-table td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.scoreboard-table tr:first-child td { color: var(--gold); font-weight: 600; }
+
+.scoreboard-empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 2rem;
+}
+
+.scoreboard-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.scoreboard-link {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-dim);
+  padding: 0.3rem 1rem;
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.scoreboard-link:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Speed Guesser Overlay ───────────────────────────────────────── */
+#speed-guesser-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.speed-guesser-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+  animation: speedGuesserPulse 0.6s ease-out;
+  white-space: nowrap;
+}
+
+.lightning-bolt {
+  position: absolute;
+  animation: lightningFade 1.2s ease-out forwards;
+}
+
+@keyframes speedGuesserPulse {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+@keyframes lightningFade {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2) translateY(-40px); }
+}
+
 /* ── Responsive: Mobile ──────────────────────────────────────────── */
 @media (max-width: 600px) {
   /* Show mobile controls, hide desktop hints */
@@ -694,4 +1040,15 @@ body {
 
   /* Toast */
   #toast { font-size: 0.85rem; padding: 0.6rem 1.2rem; bottom: 1rem; }
+
+  /* Type selector */
+  .type-btn { padding: 0.4rem 1rem; font-size: 0.9rem; }
+
+  /* Quiz */
+  .quiz-guess { max-width: 100%; }
+  .quiz-setup { max-width: 100%; }
+  .reveal-row { font-size: 1rem; }
+  #quiz-score-screen h1 { font-size: 2rem; }
+  .quiz-final-score { font-size: 1.5rem; }
+  .speed-guesser-text { font-size: 1.5rem; }
 }

@@ -53,10 +53,10 @@
       <!-- Question mark (hidden phase) -->
       <div id="question-mark" class="hidden">?</div>
 
-      <!-- Album art (art phase) -->
+      <!-- Album art (art phase — party mode only) -->
       <img id="album-art" class="hidden" alt="Album Art" />
 
-      <!-- Song info (reveal phase) -->
+      <!-- Song info (reveal phase — party mode, or quiz reveal) -->
       <div class="song-info">
         <div id="song-title" class="hidden"></div>
         <div id="song-artist" class="hidden"></div>
@@ -67,17 +67,39 @@
       <!-- Decade label (decades mode) -->
       <div id="decade-label" class="hidden"></div>
 
+      <!-- Quiz guess form (shown during quiz rounds) -->
+      <div id="quiz-guess" class="quiz-guess hidden">
+        <input type="text" id="guess-title" placeholder="Song name" spellcheck="false" autocomplete="off" />
+        <input type="text" id="guess-artist" placeholder="Artist" spellcheck="false" autocomplete="off" />
+        <input type="number" id="guess-year" placeholder="Year" min="1900" max="2030" />
+        <button id="submit-guess-btn" class="btn btn-submit" onclick="submitQuizGuess()">Submit</button>
+      </div>
+
+      <!-- Quiz reveal (shown after quiz submission) -->
+      <div id="quiz-reveal" class="quiz-reveal hidden">
+        <div id="reveal-title" class="reveal-row"></div>
+        <div id="reveal-artist" class="reveal-row"></div>
+        <div id="reveal-year" class="reveal-row"></div>
+        <div id="reveal-points" class="reveal-points"></div>
+      </div>
+
       <!-- Mobile Spotify hint -->
       <p id="mobile-spotify-hint" class="mobile-spotify-hint">
         🎧 Audio plays through your Spotify app — make sure it's open in the background
       </p>
+
+      <!-- Type selector (Party / Quiz) -->
+      <div id="type-selector" class="type-selector">
+        <button class="type-btn active" data-type="party" onclick="selectType('party')">Party</button>
+        <button class="type-btn" data-type="quiz" onclick="selectType('quiz')">Quiz</button>
+      </div>
 
       <!-- Mode selector -->
       <div id="mode-selector" class="mode-selector">
         <button class="mode-btn active" data-mode="shuffle" onclick="selectMode('shuffle')">
           Shuffle
         </button>
-        <button class="mode-btn" data-mode="decades" onclick="selectMode('decades')">
+        <button class="mode-btn" data-mode="decades" id="decades-btn" onclick="selectMode('decades')">
           By Decade
         </button>
         <button class="mode-btn" data-mode="playlist" onclick="selectMode('playlist')">
@@ -95,6 +117,16 @@
         </div>
       </div>
 
+      <!-- Quiz setup (shown in quiz mode) -->
+      <div id="quiz-setup" class="quiz-setup hidden">
+        <input type="text" id="player-name" placeholder="Player or team name"
+          spellcheck="false" autocomplete="off" />
+        <div class="song-count-row">
+          <label for="song-count">Songs:</label>
+          <input type="number" id="song-count" min="10" max="100" value="20" />
+        </div>
+      </div>
+
       <!-- Loading indicator -->
       <div id="loading-indicator" class="hidden">
         <div class="loading-spinner"></div>
@@ -104,6 +136,11 @@
       <!-- Start button -->
       <button id="start-btn" class="btn btn-gold" onclick="startGame()">
         Start Game
+      </button>
+
+      <!-- Scoreboard button (ready screen) -->
+      <button id="scoreboard-btn" class="scoreboard-link hidden" onclick="showScoreboard()">
+        View Scoreboard
       </button>
     </div>
 
@@ -126,12 +163,40 @@
     </div>
   </div>
 
-  <!-- ── Game Over Screen ──────────────────────────────────────── -->
+  <!-- ── Game Over Screen (party mode) ─────────────────────────── -->
   <div id="gameover-screen" class="hidden">
     <h1>Game Over!</h1>
     <p>That's all 60 songs. How many did you get?</p>
     <button class="btn btn-gold" onclick="restartGame()">Play Again</button>
   </div>
+
+  <!-- ── Quiz Score Screen ─────────────────────────────────────── -->
+  <div id="quiz-score-screen" class="hidden">
+    <h1 id="quiz-score-title">Quiz Complete!</h1>
+    <div id="quiz-final-name" class="quiz-final-name"></div>
+    <div id="quiz-final-score" class="quiz-final-score"></div>
+    <div id="quiz-final-ratio" class="quiz-final-ratio"></div>
+    <div id="quiz-save-area" class="quiz-save-area">
+      <button id="save-score-btn" class="btn btn-gold" onclick="saveQuizScore()">Save to Scoreboard</button>
+    </div>
+    <button class="btn btn-quit" onclick="showScoreboardFromEnd()">View Scoreboard</button>
+    <button class="btn btn-quit" onclick="restartGame()">Play Again</button>
+  </div>
+
+  <!-- ── Scoreboard Overlay ────────────────────────────────────── -->
+  <div id="scoreboard-overlay" class="hidden">
+    <div class="scoreboard-panel">
+      <h2>Scoreboard</h2>
+      <div id="scoreboard-list" class="scoreboard-list"></div>
+      <div class="scoreboard-actions">
+        <button class="btn btn-quit" onclick="closeScoreboard()">Close</button>
+        <button class="btn btn-quit" onclick="clearScoreboardUI()">Clear All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Speed Guesser Overlay ─────────────────────────────────── -->
+  <div id="speed-guesser-overlay" class="hidden"></div>
 
   <!-- ── Toast ─────────────────────────────────────────────────── -->
   <div id="toast" class="hidden"></div>
@@ -140,6 +205,7 @@
   <script src="auth.js"></script>
   <script src="tracks.js"></script>
   <script src="player.js"></script>
+  <script src="quiz.js"></script>
   <script src="app.js"></script>
   <!-- Spotify SDK: only used on desktop (mobile uses Spotify Connect via REST API) -->
   <script>
