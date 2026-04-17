@@ -204,29 +204,34 @@ async function fetchPlaylistTracks(playlistId) {
   const tracks = [];
   _parseStats = { total: 0, skipped: 0 };
 
-  let url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`;
+  const token = await getValidToken();
+  const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
 
-  while (url) {
-    const token = await getValidToken();
-    const resp = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${token}` },
+  if (!resp.ok) {
+    const body = await resp.text();
+    let parsed;
+    try { parsed = JSON.parse(body); } catch (e) {}
+    const detail = parsed?.error?.message || `HTTP ${resp.status}`;
+    throw new Error(`Spotify: ${detail}`);
+  }
+
+  const playlist = await resp.json();
+  const tracksObj = playlist.tracks || playlist.items;
+
+  parseTrackItems(tracksObj?.items, tracks);
+
+  let nextUrl = tracksObj?.next || null;
+  while (nextUrl) {
+    const t = await getValidToken();
+    const pageResp = await fetch(nextUrl, {
+      headers: { 'Authorization': `Bearer ${t}` },
     });
-
-    if (resp.status === 403) {
-      throw new Error('Spotify denied access to this playlist — try logging out and back in');
-    }
-
-    if (!resp.ok) {
-      const body = await resp.text();
-      let parsed;
-      try { parsed = JSON.parse(body); } catch (e) {}
-      const detail = parsed?.error?.message || `HTTP ${resp.status}`;
-      throw new Error(`Spotify: ${detail}`);
-    }
-
-    const page = await resp.json();
+    if (!pageResp.ok) break;
+    const page = await pageResp.json();
     parseTrackItems(page.items, tracks);
-    url = page.next || null;
+    nextUrl = page.next || null;
   }
 
   return tracks;
