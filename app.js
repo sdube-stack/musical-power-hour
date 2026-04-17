@@ -181,7 +181,11 @@ async function loadUserPlaylists() {
 
   if (!allUserPlaylists) {
     try {
-      allUserPlaylists = await fetchUserPlaylists();
+      const userId = await getCurrentUserId();
+      const all = await fetchUserPlaylists();
+      // Only show playlists owned by the current user (Spotify dev mode
+      // restricts track access for playlists owned by others)
+      allUserPlaylists = userId ? all.filter(p => p.ownerId === userId) : all;
     } catch (e) {
       if (e.message === 'SCOPE_MISSING') {
         $list.innerHTML = '<div class="playlist-loading">Spotify didn\'t grant playlist access. '

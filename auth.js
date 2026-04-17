@@ -129,6 +129,21 @@ function isLoggedIn() {
   return !!sessionStorage.getItem('spotify_access_token');
 }
 
+let currentUserId = null;
+
+async function getCurrentUserId() {
+  if (currentUserId) return currentUserId;
+  const token = await getValidToken();
+  const resp = await fetch('https://api.spotify.com/v1/me', {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (resp.ok) {
+    const data = await resp.json();
+    currentUserId = data.id;
+  }
+  return currentUserId;
+}
+
 function logout() {
   accessToken = null;
   refreshToken = null;

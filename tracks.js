@@ -298,6 +298,7 @@ async function fetchUserPlaylists() {
         name: p.name,
         image: p.images?.[0]?.url || null,
         trackCount: p.items?.total || p.tracks?.total || 0,
+        ownerId: p.owner?.id || '',
         owner: p.owner?.display_name || '',
       });
     }
