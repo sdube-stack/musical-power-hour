@@ -204,36 +204,25 @@ async function fetchPlaylistTracks(playlistId) {
   const tracks = [];
   _parseStats = { total: 0, skipped: 0 };
 
-  const token = await getValidToken();
-  const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
+  let url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`;
 
-  if (!resp.ok) {
-    const body = await resp.text();
-    let parsed;
-    try { parsed = JSON.parse(body); } catch (e) {}
-    const detail = parsed?.error?.message || `HTTP ${resp.status}`;
-    throw new Error(`Spotify: ${detail}`);
-  }
-
-  const playlist = await resp.json();
-  console.log('Playlist response keys:', Object.keys(playlist));
-  console.log('Playlist response:', JSON.stringify(playlist).substring(0, 500));
-  const tracksObj = playlist.tracks || playlist.items;
-
-  parseTrackItems(tracksObj?.items, tracks);
-
-  let nextUrl = tracksObj?.next || null;
-  while (nextUrl) {
-    const t = await getValidToken();
-    const pageResp = await fetch(nextUrl, {
-      headers: { 'Authorization': `Bearer ${t}` },
+  while (url) {
+    const token = await getValidToken();
+    const resp = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` },
     });
-    if (!pageResp.ok) break;
-    const page = await pageResp.json();
+
+    if (!resp.ok) {
+      const body = await resp.text();
+      let parsed;
+      try { parsed = JSON.parse(body); } catch (e) {}
+      const detail = parsed?.error?.message || `HTTP ${resp.status}`;
+      throw new Error(`Spotify: ${detail}`);
+    }
+
+    const page = await resp.json();
     parseTrackItems(page.items, tracks);
-    nextUrl = page.next || null;
+    url = page.next || null;
   }
 
   return tracks;
