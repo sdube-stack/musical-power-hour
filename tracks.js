@@ -74,14 +74,18 @@ async function searchSpotifyTrack(artist, title, billboardYear) {
   let resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
 
   if (resp.status === 429) {
-    const wait = Math.min(parseInt(resp.headers.get('Retry-After') || '3', 10), 5);
+    const retryAfter = parseInt(resp.headers.get('Retry-After') || '3', 10);
+    console.warn(`Spotify 429 on "${title}" — Retry-After: ${retryAfter}s`);
+    const wait = Math.min(retryAfter, 5);
     await new Promise(r => setTimeout(r, wait * 1000));
     resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
   }
 
   if (resp.status === 429) {
+    const retryAfter = resp.headers.get('Retry-After');
+    console.error(`Spotify 429 persisted after retry — Retry-After: ${retryAfter}s`);
     rateLimitHit = true;
-    throw new Error('Spotify rate limit reached — wait a few minutes and try again');
+    throw new Error(`Spotify rate limit reached — Spotify says wait ${retryAfter}s`);
   }
 
   if (!resp.ok) return null; // Don't cache errors — retry next time
