@@ -263,6 +263,9 @@ async function fetchUserPlaylists() {
     const resp = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` },
     });
+    if (resp.status === 403) {
+      throw new Error('SCOPE_MISSING');
+    }
     if (!resp.ok) break;
     const data = await resp.json();
 

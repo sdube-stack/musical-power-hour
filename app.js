@@ -180,7 +180,18 @@ async function loadUserPlaylists() {
   $list.innerHTML = '<div class="playlist-loading">Loading your playlists...</div>';
 
   if (!allUserPlaylists) {
-    allUserPlaylists = await fetchUserPlaylists();
+    try {
+      allUserPlaylists = await fetchUserPlaylists();
+    } catch (e) {
+      if (e.message === 'SCOPE_MISSING') {
+        $list.innerHTML = '<div class="playlist-loading">Spotify didn\'t grant playlist access. '
+          + '<a href="#" onclick="doLogout(); loginWithSpotify(); return false;" style="color: #1db954;">'
+          + 'Log out and try again</a></div>';
+        return;
+      }
+      $list.innerHTML = '<div class="playlist-loading">Failed to load playlists</div>';
+      return;
+    }
   }
 
   const minTracks = gameType === 'quiz' ? 10 : 60;
