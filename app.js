@@ -299,7 +299,13 @@ async function buildCustomPlaylist() {
   updateLoading('Loading your playlist...');
   const tracks = await fetchPlaylistTracks(selectedPlaylistId);
 
-  if (tracks.length === 0) throw new Error('Playlist is empty or could not be loaded');
+  if (tracks.length === 0) {
+    const { total, skipped } = _parseStats;
+    if (total === 0) {
+      throw new Error('Spotify returned no items for this playlist');
+    }
+    throw new Error(`Playlist has ${total} items but none are playable (${skipped} skipped — may be local files or unavailable)`);
+  }
 
   const count = gameType === 'quiz' ? quizSongCount : 60;
   return shuffleTracks(tracks).slice(0, count);

@@ -202,6 +202,7 @@ async function buildBillboardDecadePlaylist(onProgress) {
 
 async function fetchPlaylistTracks(playlistId) {
   const tracks = [];
+  _parseStats = { total: 0, skipped: 0 };
 
   const token = await getValidToken();
   const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
@@ -236,10 +237,16 @@ async function fetchPlaylistTracks(playlistId) {
   return tracks;
 }
 
+let _parseStats = { total: 0, skipped: 0 };
+
 function parseTrackItems(items, tracks) {
   for (const item of (items || [])) {
+    _parseStats.total++;
     const t = item?.track || item?.item;
-    if (!t || !t.uri || !t.name || t.uri.startsWith('spotify:local:')) continue;
+    if (!t || !t.uri || !t.name || t.uri.startsWith('spotify:local:')) {
+      _parseStats.skipped++;
+      continue;
+    }
 
     const year = parseInt(t.album?.release_date?.substring(0, 4), 10) || 0;
     tracks.push({
