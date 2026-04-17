@@ -204,25 +204,49 @@ async function fetchPlaylistTracks(playlistId) {
   const tracks = [];
   _parseStats = { total: 0, skipped: 0 };
 
-  let url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`;
+  // Try full playlist endpoint first
+  const token = await getValidToken();
+  const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
 
-  while (url) {
-    const token = await getValidToken();
-    const resp = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${token}` },
+  if (!resp.ok) {
+    const body = await resp.text();
+    let parsed;
+    try { parsed = JSON.parse(body); } catch (e) {}
+    const detail = parsed?.error?.message || `HTTP ${resp.status}`;
+    throw new Error(`Spotify: ${detail}`);
+  }
+
+  const playlist = await resp.json();
+
+  // Some playlists (e.g. popular public ones) don't include tracks
+  // in the main response — fall back to the dedicated tracks endpoint
+  let tracksPage = playlist.tracks;
+  if (!tracksPage || !tracksPage.items) {
+    const t2 = await getValidToken();
+    const fallback = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`, {
+      headers: { 'Authorization': `Bearer ${t2}` },
     });
-
-    if (!resp.ok) {
-      const body = await resp.text();
-      let parsed;
-      try { parsed = JSON.parse(body); } catch (e) {}
-      const detail = parsed?.error?.message || `HTTP ${resp.status}`;
-      throw new Error(`Spotify: ${detail}`);
+    if (fallback.ok) {
+      tracksPage = await fallback.json();
+    } else {
+      throw new Error('This playlist\'s tracks are not accessible — try a playlist you own or follow');
     }
+  }
 
-    const page = await resp.json();
+  parseTrackItems(tracksPage.items, tracks);
+
+  let nextUrl = tracksPage.next || null;
+  while (nextUrl) {
+    const t = await getValidToken();
+    const pageResp = await fetch(nextUrl, {
+      headers: { 'Authorization': `Bearer ${t}` },
+    });
+    if (!pageResp.ok) break;
+    const page = await pageResp.json();
     parseTrackItems(page.items, tracks);
-    url = page.next || null;
+    nextUrl = page.next || null;
   }
 
   return tracks;
