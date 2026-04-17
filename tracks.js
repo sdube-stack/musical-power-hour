@@ -71,13 +71,11 @@ async function searchSpotifyTrack(artist, title, billboardYear) {
   const token = await getValidToken();
   const q = `track:${title} artist:${artist}`;
   const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`;
-  let resp;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-    if (resp.status !== 429) break;
-    const wait = parseInt(resp.headers.get('Retry-After') || '3', 10);
-    console.warn(`Rate limited, waiting ${wait}s (attempt ${attempt + 1}/5)...`);
-    await new Promise(r => setTimeout(r, wait * 1000));
+  const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+
+  if (resp.status === 429) {
+    rateLimitHit = true;
+    throw new Error('Spotify rate limit reached — wait a few minutes and try again');
   }
 
   if (!resp.ok) return null; // Don't cache errors — retry next time
@@ -150,10 +148,13 @@ function pickSongsFromBillboard(data, decade, count) {
 
 // ── Build playlists from billboard data ─────────────────────────────
 
+let rateLimitHit = false;
+
 async function searchDecadeUntilFull(songs, needed, onProgress, progressOffset) {
   const found = [];
 
   for (let i = 0; i < songs.length && found.length < needed; i++) {
+    if (rateLimitHit) break;
     if (onProgress) onProgress(progressOffset + found.length);
     const s = songs[i];
     const r = await searchSpotifyTrack(s.artist, s.title, s.billboardYear);
@@ -164,6 +165,7 @@ async function searchDecadeUntilFull(songs, needed, onProgress, progressOffset) 
 }
 
 async function buildBillboardShufflePlaylist(onProgress) {
+  rateLimitHit = false;
   const data = await loadBillboard();
   const result = [];
 
@@ -180,6 +182,7 @@ async function buildBillboardShufflePlaylist(onProgress) {
 }
 
 async function buildBillboardDecadePlaylist(onProgress) {
+  rateLimitHit = false;
   const data = await loadBillboard();
   const result = [];
 
