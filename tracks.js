@@ -218,6 +218,7 @@ async function fetchPlaylistTracks(playlistId) {
   }
 
   const playlist = await resp.json();
+  console.log('Playlist response:', playlist.name, '| tracks obj:', playlist.tracks ? `${playlist.tracks.total} total, ${(playlist.tracks.items || []).length} in first page` : 'missing');
   const tracksObj = playlist.tracks || playlist.items;
 
   parseTrackItems(tracksObj?.items, tracks);
