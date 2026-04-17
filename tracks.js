@@ -71,7 +71,13 @@ async function searchSpotifyTrack(artist, title, billboardYear) {
   const token = await getValidToken();
   const q = `track:${title} artist:${artist}`;
   const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`;
-  const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+  let resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+
+  if (resp.status === 429) {
+    const wait = Math.min(parseInt(resp.headers.get('Retry-After') || '3', 10), 5);
+    await new Promise(r => setTimeout(r, wait * 1000));
+    resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+  }
 
   if (resp.status === 429) {
     rateLimitHit = true;
