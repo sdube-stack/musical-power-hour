@@ -972,6 +972,17 @@ body {
   100% { opacity: 0; transform: scale(2) translateY(-40px); }
 }
 
+/* ── Version Tag ──────────────────────────────────────────────────── */
+.version-tag {
+  position: fixed;
+  bottom: 0.4rem;
+  right: 0.6rem;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.12);
+  z-index: 1;
+  pointer-events: none;
+}
+
 /* ── Responsive: Mobile ──────────────────────────────────────────── */
 @media (max-width: 600px) {
   /* Show mobile controls, hide desktop hints */
