@@ -978,7 +978,7 @@ body {
   bottom: 0.4rem;
   right: 0.6rem;
   font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.35);
   z-index: 1;
   pointer-events: none;
 }
