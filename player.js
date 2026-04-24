@@ -106,12 +106,15 @@ function initDesktopPlayer() {
 
 // ── Playback Controls ───────────────────────────────────────────────
 
-async function playTrack(spotifyUri) {
+async function playTrack(spotifyUri, positionMs = 0) {
   const token = await getValidToken();
   // Desktop targets the SDK device; mobile omits device_id to use active device
   const url = useMobilePlayback
     ? 'https://api.spotify.com/v1/me/player/play'
     : `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`;
+
+  const body = { uris: [spotifyUri] };
+  if (positionMs > 0) body.position_ms = positionMs;
 
   const resp = await fetch(url, {
     method: 'PUT',
@@ -119,7 +122,7 @@ async function playTrack(spotifyUri) {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ uris: [spotifyUri] }),
+    body: JSON.stringify(body),
   });
 
   if (!resp.ok && resp.status !== 204) {

@@ -64,9 +64,6 @@
         <button id="report-btn" class="hidden report-btn">Wrong song?</button>
       </div>
 
-      <!-- Decade label (decades mode) -->
-      <div id="decade-label" class="hidden"></div>
-
       <!-- Quiz guess form (shown during quiz rounds) -->
       <div id="quiz-guess" class="quiz-guess hidden">
         <input type="text" id="guess-title" placeholder="Song name" spellcheck="false" autocomplete="off" />
@@ -94,21 +91,8 @@
         <button class="type-btn" data-type="quiz" onclick="selectType('quiz')">Quiz</button>
       </div>
 
-      <!-- Mode selector -->
-      <div id="mode-selector" class="mode-selector">
-        <button class="mode-btn active" data-mode="shuffle" onclick="selectMode('shuffle')">
-          Shuffle
-        </button>
-        <button class="mode-btn" data-mode="decades" id="decades-btn" onclick="selectMode('decades')">
-          By Decade
-        </button>
-        <button class="mode-btn" data-mode="playlist" onclick="selectMode('playlist')">
-          My Playlist
-        </button>
-      </div>
-
-      <!-- Playlist picker (shown for My Playlist mode) -->
-      <div id="playlist-picker" class="playlist-picker hidden">
+      <!-- Playlist picker -->
+      <div id="playlist-picker" class="playlist-picker">
         <input type="text" id="playlist-search"
           placeholder="Search your playlists..."
           spellcheck="false" autocomplete="off" />
@@ -200,7 +184,7 @@
   <div id="speed-guesser-overlay" class="hidden"></div>
 
   <!-- ── Version ────────────────────────────────────────────────── -->
-  <div class="version-tag">v2.1.9</div>
+  <div class="version-tag">v2.2.0</div>
 
   <!-- ── Toast ─────────────────────────────────────────────────── -->
   <div id="toast" class="hidden"></div>

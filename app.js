@@ -3,13 +3,12 @@
 const ROUND_DURATION = 60000;   // 60 seconds per song
 const ART_REVEAL_AT = 30000;    // album art at 30s (party only)
 const FULL_REVEAL_AT = 50000;   // title/artist at 50s (party only)
-const SONGS_PER_DECADE = 10;
 const QUIZ_REVEAL_DURATION = 5000; // 5 seconds to show correct answers
 const SPEED_GUESS_CUTOFF = 30000;  // must submit within 30s for speed bonus
+const ROUND_START_OFFSET_MS = 15000; // start each track 15s in to skip intros
 
 let gameState = 'LOGIN';  // LOGIN | READY | LOADING | PLAYING | PAUSED | GAME_OVER
 let gameType = 'party';   // party | quiz
-let gameMode = 'shuffle'; // shuffle | decades | playlist
 let playlist = [];
 let currentIndex = 0;
 let roundStartTime = 0;
@@ -85,6 +84,7 @@ function showReadyState() {
   $songArtist.classList.add('hidden');
   $songYear.classList.add('hidden');
   initSpotifySDK();
+  if (!userPlaylistsLoaded) loadUserPlaylists();
 }
 
 async function initSpotifySDK() {
@@ -108,57 +108,29 @@ function selectType(type) {
   document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`[data-type="${type}"]`).classList.add('active');
 
-  const $decadesBtn = document.getElementById('decades-btn');
   const $quizSetup = document.getElementById('quiz-setup');
   const $scoreboardBtn = document.getElementById('scoreboard-btn');
 
   if (type === 'quiz') {
-    $decadesBtn.classList.add('hidden');
     $quizSetup.classList.remove('hidden');
     $scoreboardBtn.classList.remove('hidden');
-    // If decades was selected, switch to shuffle
-    if (gameMode === 'decades') selectMode('shuffle');
-    // Reload playlists with 10+ filter if in playlist mode
-    if (gameMode === 'playlist') reloadPlaylistPicker();
   } else {
-    $decadesBtn.classList.remove('hidden');
     $quizSetup.classList.add('hidden');
     $scoreboardBtn.classList.add('hidden');
-    // Reload playlists with 60+ filter if in playlist mode
-    if (gameMode === 'playlist') reloadPlaylistPicker();
   }
+  // Reload playlists to apply correct min-track filter (quiz: 10+, party: 60+)
+  reloadPlaylistPicker();
 }
 
-// ── Mode Selection ──────────────────────────────────────────────────
+// ── Playlist Picker ─────────────────────────────────────────────────
 
 let selectedPlaylistId = null;
 let userPlaylistsLoaded = false;
 
-function selectMode(mode) {
-  gameMode = mode;
-  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.querySelector(`[data-mode="${mode}"]:not(.hidden)`);
-  if (btn) btn.classList.add('active');
-
-  const $picker = document.getElementById('playlist-picker');
-  if (mode === 'playlist') {
-    $picker.classList.remove('hidden');
-    if (!userPlaylistsLoaded) loadUserPlaylists();
-    // Update song count max for quiz
-    updateSongCountMax();
-  } else {
-    $picker.classList.add('hidden');
-    // Reset song count max for shuffle
-    if (gameType === 'quiz') {
-      document.getElementById('song-count').max = 100;
-    }
-  }
-}
-
 function updateSongCountMax() {
   if (gameType !== 'quiz') return;
   const $count = document.getElementById('song-count');
-  if (gameMode === 'playlist' && selectedPlaylistTrackCount > 0) {
+  if (selectedPlaylistTrackCount > 0) {
     $count.max = selectedPlaylistTrackCount;
     if (parseInt($count.value) > selectedPlaylistTrackCount) {
       $count.value = selectedPlaylistTrackCount;
@@ -264,7 +236,6 @@ function showLoading(message) {
   gameState = 'LOADING';
   document.getElementById('start-btn').classList.add('hidden');
   document.getElementById('type-selector').classList.add('hidden');
-  document.getElementById('mode-selector').classList.add('hidden');
   document.getElementById('playlist-picker').classList.add('hidden');
   document.getElementById('quiz-setup').classList.add('hidden');
   document.getElementById('scoreboard-btn').classList.add('hidden');
@@ -284,18 +255,6 @@ function hideLoading() {
 }
 
 // ── Playlist Builders ───────────────────────────────────────────────
-
-async function buildShufflePlaylist() {
-  const tracks = await buildBillboardShufflePlaylist((msg) => updateLoading(msg));
-  if (tracks.length === 0) throw new Error('No tracks found on Spotify');
-  return tracks;
-}
-
-async function buildDecadePlaylist() {
-  const tracks = await buildBillboardDecadePlaylist((msg) => updateLoading(msg));
-  if (tracks.length === 0) throw new Error('No tracks found on Spotify');
-  return tracks;
-}
 
 async function buildCustomPlaylist() {
   if (!selectedPlaylistId) throw new Error('Select a playlist first');
@@ -352,23 +311,11 @@ async function startGame() {
   showLoading('Preparing songs...');
 
   try {
-    if (gameMode === 'decades') {
-      playlist = await buildDecadePlaylist();
-    } else if (gameMode === 'playlist') {
-      playlist = await buildCustomPlaylist();
-    } else {
-      playlist = await buildShufflePlaylist();
-    }
-
-    // For quiz shuffle, limit to requested song count
-    if (gameType === 'quiz' && gameMode === 'shuffle') {
-      playlist = playlist.slice(0, quizSongCount);
-    }
+    playlist = await buildCustomPlaylist();
   } catch (err) {
     hideLoading();
     showReadyState();
     selectType(gameType);
-    selectMode(gameMode);
     showToast(err.message, 6000);
     return;
   }
@@ -392,22 +339,10 @@ async function startRound() {
   const track = playlist[currentIndex];
   const totalSongs = playlist.length;
 
-  // Show decade label in decades mode
-  const $decadeLabel = document.getElementById('decade-label');
-  if (gameMode === 'decades' && gameType === 'party') {
-    const decade = Math.floor(track.year / 10) * 10;
-    const decadeStr = `${decade}s`;
-    $decadeLabel.textContent = decadeStr;
-    $decadeLabel.classList.remove('hidden');
-    const songInDecade = (currentIndex % SONGS_PER_DECADE) + 1;
-    $songCounter.textContent = `${decadeStr} — Song ${songInDecade}/${SONGS_PER_DECADE}  (${currentIndex + 1} of ${totalSongs})`;
+  if (gameType === 'quiz') {
+    $songCounter.textContent = `Song ${currentIndex + 1} of ${totalSongs}  |  Score: ${quizScore}`;
   } else {
-    $decadeLabel.classList.add('hidden');
-    if (gameType === 'quiz') {
-      $songCounter.textContent = `Song ${currentIndex + 1} of ${totalSongs}  |  Score: ${quizScore}`;
-    } else {
-      $songCounter.textContent = `Song ${currentIndex + 1} of ${totalSongs}`;
-    }
+    $songCounter.textContent = `Song ${currentIndex + 1} of ${totalSongs}`;
   }
   $progressBar.style.width = `${((currentIndex) / totalSongs) * 100}%`;
 
@@ -444,7 +379,7 @@ async function startRound() {
   }
 
   try {
-    await playTrack(track.uri);
+    await playTrack(track.uri, ROUND_START_OFFSET_MS);
   } catch (err) {
     console.error('Failed to play track:', err);
     showToast(`Skipping: ${track.title} (unavailable)`, 2000);
@@ -794,7 +729,7 @@ async function togglePause() {
     roundStartTime = Date.now() - pauseOffset;
     $pauseOverlay.classList.add('hidden');
     const track = playlist[currentIndex];
-    await playTrack(track.uri);
+    await playTrack(track.uri, ROUND_START_OFFSET_MS);
   }
 }
 
@@ -868,17 +803,13 @@ function restartGame() {
   $gameScreen.classList.remove('hidden');
   document.getElementById('start-btn').classList.remove('hidden');
   document.getElementById('type-selector').classList.remove('hidden');
-  document.getElementById('mode-selector').classList.remove('hidden');
-  document.getElementById('decade-label').classList.add('hidden');
   document.getElementById('loading-indicator').classList.add('hidden');
   document.getElementById('quiz-guess').classList.add('hidden');
   document.getElementById('quiz-reveal').classList.add('hidden');
 
-  // Restore type/mode selection state
+  // Restore type selection state and show playlist picker
   selectType(gameType);
-  if (gameMode === 'playlist') {
-    document.getElementById('playlist-picker').classList.remove('hidden');
-  }
+  document.getElementById('playlist-picker').classList.remove('hidden');
 
   document.getElementById('game-title').classList.remove('hidden');
   document.getElementById('timer-container').classList.add('hidden');
@@ -895,7 +826,6 @@ function restartGame() {
 
 function startOver() {
   gameType = 'party';
-  gameMode = 'shuffle';
   selectedPlaylistId = null;
   restartGame();
 }
